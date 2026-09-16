@@ -2395,19 +2395,21 @@ renderMeBtn(); renderNotifyBtn();
    поэтому там этот блок молча пропускается, а приложение работает как прежде. */
 function swBar(html){ const el = $("#swbar"); if (el) el.innerHTML = html; }
 function initPWA(){
-  if (!("serviceWorker" in navigator) || !location.protocol.startsWith("http")) return;
-  if (window.top !== window.self) return;
-  let reloading = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloading) { reloading = true; location.reload(); } });
-  navigator.serviceWorker.register("sw.js").then(reg => {
-    const offer = () => swBar(`<div class="banner">Загружена новая версия приложения. <button class="btn ghost" type="button" data-act="swUpdate">Обновить</button></div>`);
-    if (reg.waiting && navigator.serviceWorker.controller) offer();
-    reg.addEventListener("updatefound", () => {
-      const w = reg.installing; if (!w) return;
-      w.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) offer(); });
-    });
-    S.swReg = reg;
-  }).catch(() => {});
+  /* в песочнице артефакта обращение к serviceWorker может само по себе бросить исключение */
+  try {
+    if (!("serviceWorker" in navigator) || !location.protocol.startsWith("http")) return;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloading) { reloading = true; location.reload(); } });
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      const offer = () => swBar(`<div class="banner">Загружена новая версия приложения. <button class="btn ghost" type="button" data-act="swUpdate">Обновить</button></div>`);
+      if (reg.waiting && navigator.serviceWorker.controller) offer();
+      reg.addEventListener("updatefound", () => {
+        const w = reg.installing; if (!w) return;
+        w.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) offer(); });
+      });
+      S.swReg = reg;
+    }).catch(() => {});
+  } catch(e) {}
 }
 function renderNet(){
   const el = $("#netbar"); if (!el) return;

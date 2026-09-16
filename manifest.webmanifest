@@ -1,0 +1,19 @@
+{
+  "name": "Интенсивное наблюдение",
+  "short_name": "Наблюдение",
+  "description": "Мониторинг тяжёлых пациентов: отклонения от нормы, шкалы тяжести и интерпретация",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "id": "icu-monitoring",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F2F5F7",
+  "theme_color": "#1D5DA6",
+  "categories": ["medical", "health", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

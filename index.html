@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Интенсивное наблюдение — отклонения и интерпретация</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#1D5DA6">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0E1521">
+<meta name="description" content="Мониторинг тяжёлых пациентов: отклонения от нормы, шкалы тяжести и интерпретация">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Наблюдение">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -229,6 +237,10 @@ fieldset.sitem.dim legend::after{content:" — не требуется";font-wei
 .empty h2{color:var(--ink);font-size:20px;margin:0 0 6px}
 .banner{font-size:13.5px;background:var(--blue-soft);padding:8px 20px;border-bottom:1px solid var(--grid)}
 .banner.err{background:var(--red-soft)}
+.alarmbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;background:var(--red-soft);color:var(--red);
+  padding:8px 20px;border-bottom:2px solid var(--red)}
+.alarmbar .linkbtn{color:var(--red);font-weight:600}
+.alarmbar .faint{color:var(--red);opacity:.75}
 
 dialog{border:1px solid var(--grid);border-radius:12px;padding:0;background:var(--sheet);color:var(--ink);width:min(640px,94vw);max-height:90vh}
 dialog::backdrop{background:rgba(10,20,35,.45)}
@@ -267,9 +279,13 @@ dialog#dlgSbar{width:min(760px,94vw)}
   <div class="brand"><b>Интенсивное наблюдение</b><span>отклонения, шкалы и интерпретация</span></div>
   <div class="mode" id="mode"><i class="dot"></i><span>Подключение…</span></div>
   <button class="btn ghost" id="meBtn" type="button">Кто я</button>
+  <button class="btn ghost" id="notifyBtn" type="button" aria-pressed="false">Уведомления</button>
   <button class="btn ghost" id="normsBtn" type="button">Нормы</button>
 </header>
 <div id="banner"></div>
+<div id="netbar"></div>
+<div id="swbar"></div>
+<div id="alarm"></div>
 <div class="app" id="app">
   <aside>
     <div class="side-head">
@@ -286,6 +302,7 @@ dialog#dlgSbar{width:min(760px,94vw)}
 <dialog id="dlgVoid"><form class="dlg" id="fVoid" method="dialog"></form></dialog>
 <dialog id="dlgSbar"><div class="dlg" id="sbarBody"></div></dialog>
 <dialog id="dlgMe"><form class="dlg" id="fMe" method="dialog"></form></dialog>
+<dialog id="dlgArchive"><div class="dlg" id="archBody"></div></dialog>
 
 <script>
 "use strict";
@@ -323,6 +340,7 @@ const DEFAULT_IND = [
   {code:"vent", g:"support", name:"Респираторная поддержка", unit:"", type:"sel", opts:["Нет","НИВЛ / высокопоточная O₂","Инвазивная ИВЛ"], short:["нет","НИВЛ","ИВЛ"], lo:null, hi:null},
   {code:"peep", g:"support", name:"ПДКВ (PEEP)", unit:"см вод. ст.", lo:null, hi:null, d:0},
   {code:"pplat", g:"support", name:"Давление плато (Pplat)", unit:"см вод. ст.", lo:null, hi:30, d:0},
+  {code:"ppeak", g:"support", name:"Пиковое давление (Ppeak)", unit:"см вод. ст.", lo:null, hi:35, d:0},
   {code:"vt", g:"support", name:"Дыхательный объём", unit:"мл", lo:null, hi:null, d:0},
   {code:"norad", g:"support", name:"Норадреналин", unit:"мкг/кг/мин", lo:null, hi:null, d:2},
   {code:"adr", g:"support", name:"Адреналин", unit:"мкг/кг/мин", lo:null, hi:null, d:2},
@@ -431,12 +449,17 @@ const DERIVED = [
   {code:"_pf", g:"_d", name:"PaO₂/FiO₂", unit:"", lo:300, hi:null, d:0, inputs:["po2","fio2"]},
   {code:"_ag", g:"_d", name:"Анионный интервал", unit:"ммоль/л", lo:8, hi:12, d:1, inputs:["na","cl","hco3","alb"]},
   {code:"_dp", g:"_d", name:"Движущее давление (Pplat − ПДКВ)", unit:"см вод. ст.", lo:null, hi:14, d:0, inputs:["pplat","peep"]},
-  {code:"_vtkg", g:"_d", name:"Дыхательный объём на кг ДМТ", unit:"мл/кг", lo:6, hi:8, d:1, inputs:["vt"]}
+  {code:"_vtkg", g:"_d", name:"Дыхательный объём на кг ДМТ", unit:"мл/кг", lo:6, hi:8, d:1, inputs:["vt"]},
+  {code:"_cstat", g:"_d", name:"Статический комплаенс (Vt / движущее давление)", unit:"мл/см вод. ст.", lo:40, hi:null, d:1, inputs:["vt","pplat","peep"]},
+  {code:"_rres", g:"_d", name:"Резистивное давление (Ppeak − Pplat)", unit:"см вод. ст.", lo:null, hi:10, d:0, inputs:["ppeak","pplat"]},
+  {code:"_mp", g:"_d", name:"Механическая мощность", unit:"Дж/мин", lo:null, hi:17, d:1, inputs:["rr","vt","ppeak","pplat","peep"]}
 ];
 /* оконные агрегаты: считаются не по срезу, а за период */
 const AGG = [
   {code:"_urine24", g:"_a", name:"Диурез за 24 ч (сумма часовых)", unit:"мл", lo:500, hi:null, d:0},
-  {code:"_bal24", g:"_a", name:"Баланс жидкости за 24 ч", unit:"мл", lo:-1500, hi:1500, d:0}
+  {code:"_bal24", g:"_a", name:"Баланс жидкости за 24 ч", unit:"мл", lo:-1500, hi:1500, d:0},
+  {code:"_insens24", g:"_a", name:"Неощутимые потери за 24 ч (оценка)", unit:"мл", lo:null, hi:null, d:0},
+  {code:"_balc24", g:"_a", name:"Баланс с учётом неощутимых потерь", unit:"мл", lo:-1500, hi:1500, d:0}
 ];
 /* должная масса тела (ARDSNet): нужна для дыхательного объёма */
 const pbw = p => { const h = Number(p?.height); if (!h || !p?.sex) return null; return (p.sex === "f" ? 45.5 : 50) + 0.91 * (h - 152.4); };
@@ -487,6 +510,7 @@ function LocalStore(){
     async addPatient(d){ const id = rid(); s.patients[id] = d; save(); emitP(); return id; },
     async setPatient(id, d){ s.patients[id] = d; save(); emitP(); },
     async deletePatient(id){ delete s.patients[id]; delete s.entries[id]; save(); emitP(); },
+    async getEntries(pid){ return Object.entries(s.entries[pid] || {}).map(([id, d]) => ({id, ...d})); },
     async addEntry(pid, d){ (s.entries[pid] ||= {})[rid()] = d; save(); emitE(pid); },
     async setEntry(pid, eid, d){ if (s.entries[pid]) s.entries[pid][eid] = d; save(); emitE(pid); },
     async deleteEntry(pid, eid){ if (s.entries[pid]) delete s.entries[pid][eid]; save(); emitE(pid); },
@@ -506,6 +530,7 @@ function RemoteStore(db){
       for (const d of snap.docs) await db.doc(`patients/${id}/entries/${d.id}`).delete();
       await db.doc("patients/" + id).delete();
     },
+    async getEntries(pid){ return arr(await db.collection(`patients/${pid}/entries`).get()); },
     async addEntry(pid, d){ await db.collection(`patients/${pid}/entries`).add(d); },
     async setEntry(pid, eid, d){ await db.doc(`patients/${pid}/entries/${eid}`).set(d); },
     async deleteEntry(pid, eid){ await db.doc(`patients/${pid}/entries/${eid}`).delete(); },
@@ -521,6 +546,7 @@ const S = {
   draft:{}, draftGroup:"vitals", draftWhen:nowLocal(), draftNote:"",
   nurse:lsGet("icu-nurse") || "", role:lsGet("icu-role") || "", unsubE:null,
   newKeys:new Set(), toast:null,
+  notify:lsGet("icu-notify") === "1", critSeen:new Map(), alarm:null, audio:null, selfSave:{pid:null, t:0}, swReg:null,
   ai:{busy:false, text:"", ctl:null, err:""}
 };
 const currentPatient = () => S.patients.find(p => p.id === S.selected) || null;
@@ -582,25 +608,38 @@ function derive(st, p){
     if (g("alb") != null) r._agc = r._ag + 0.25 * (40 - g("alb"));
   }
   if (g("pplat") != null && g("peep") != null) r._dp = g("pplat") - g("peep");
+  /* статический комплаенс = дыхательный объём / движущее давление */
+  if (r._dp > 0 && g("vt") != null) r._cstat = g("vt") / r._dp;
+  /* резистивное давление: разница пикового и плато отражает сопротивление дыхательных путей */
+  if (g("ppeak") != null && g("pplat") != null) r._rres = g("ppeak") - g("pplat");
+  /* механическая мощность (упрощённая формула Gattinoni для объёмной вентиляции с постоянным потоком) */
+  if (r._dp != null && g("rr") != null && g("vt") != null && g("ppeak") != null)
+    r._mp = 0.098 * g("rr") * (g("vt") / 1000) * (g("ppeak") - r._dp / 2);
   const w = pbw(p);
   if (g("vt") != null && w) r._vtkg = g("vt") / w;
   return r;
 }
 /* водный баланс и суммарный часовой диурез за окно (по умолчанию 24 ч) */
-function fluidAt(sorted, T, hours){
+function fluidAt(sorted, T, hours, p){
   const from = T - (hours || 24) * H;
-  let inV = 0, ur = 0, other = 0, nIn = 0, nUr = 0, nOther = 0, first = null;
+  let inV = 0, ur = 0, other = 0, nIn = 0, nUr = 0, nOther = 0, first = null, tSum = 0, tN = 0;
   for (const e of sorted) {
     const t = tOf(e.takenAt); if (t > T || t < from) continue;
     const v = e.values || {};
     if (v.fin != null) { inV += v.fin; nIn++; }
     if (v.diur != null) { ur += v.diur; nUr++; }
     if (v.lossx != null) { other += v.lossx; nOther++; }
+    if (v.temp != null) { tSum += v.temp; tN++; }
     if ((v.fin != null || v.diur != null || v.lossx != null) && first == null) first = t;
   }
   if (!nIn && !nUr && !nOther) return null;
-  return {in:inV, urine:ur, other, out:ur + other, bal:inV - ur - other,
-    nIn, nUr, nOther, spanH:first != null ? (T - first) / H : 0};
+  const spanH = first != null ? (T - first) / H : 0, bal = inV - ur - other;
+  /* неощутимые потери (перспирация и дыхание): ориентировочно 0,5 мл/кг/ч, +10% на каждый градус выше 37 °C */
+  const w = Number(p?.weight) || null, tAvg = tN ? tSum / tN : null;
+  const insens = w && spanH > 0 ? 0.5 * w * spanH * (1 + 0.1 * Math.max(0, (tAvg ?? 37) - 37)) : null;
+  return {in:inV, urine:ur, other, out:ur + other, bal,
+    insens, balc:insens != null ? bal - insens : null, tAvg,
+    nIn, nUr, nOther, spanH};
 }
 
 /* ================= шкалы тяжести и риска ================= */
@@ -747,6 +786,38 @@ const CPOT = [
   {id:"tone", base:0, name:"Мышечное напряжение при пассивном сгибании руки", opts:["Расслаблен, сопротивления нет","Напряжён, ригиден","Выраженное напряжение, сгибание невозможно"]},
   {id:"vent", base:0, name:"Синхронизация с ИВЛ (или вокализация вне ИВЛ)", opts:["Аппарат переносит хорошо / говорит спокойно или молчит","Кашляет, но переносит / вздыхает, стонет","Сопротивляется аппарату, тревога аппарата / кричит, плачет"]}
 ];
+const BPS = [
+  {id:"face", name:"Выражение лица", opts:["Расслаблено","Частично напряжено (например, опущены брови)","Полностью напряжено (сомкнуты веки)","Гримаса"]},
+  {id:"arms", name:"Движения верхних конечностей", opts:["Движений нет","Частично согнуты","Полностью согнуты со сгибанием пальцев","Постоянно подтянуты к телу"]},
+  {id:"vent", name:"Синхронизация с аппаратом ИВЛ", opts:["Хорошо переносит вентиляцию","Кашляет, но в основном переносит","Борется с аппаратом","Вентиляция невозможна"]}
+];
+const SIC = [
+  {id:"plt", base:0, name:"Тромбоциты, ×10⁹/л", opts:["≥ 150","100–149","< 100"],
+   auto:c => c.v("plt") == null ? null : c.v("plt") >= 150 ? 0 : c.v("plt") >= 100 ? 1 : 2},
+  {id:"inr", base:0, name:"МНО", opts:["≤ 1,2","1,21–1,40","> 1,40"],
+   auto:c => c.v("inr") == null ? null : c.v("inr") <= 1.2 ? 0 : c.v("inr") <= 1.4 ? 1 : 2},
+  {id:"sofa", base:0, name:"SOFA по четырём системам (дыхательная, сердечно-сосудистая, печень, почки)", opts:["0","1","≥ 2"],
+   auto:c => c.sofa4 == null ? null : Math.min(c.sofa4, 2)}
+];
+const NRS = [
+  {id:"nutr", base:0, name:"Нарушение нутритивного статуса", opts:["Нет: питание в норме",
+    "Лёгкое: потеря массы > 5% за 3 мес. или потребление 50–75% от потребности за прошлую неделю",
+    "Умеренное: потеря > 5% за 2 мес., либо ИМТ 18,5–20,5 с ухудшением состояния, либо потребление 25–50%",
+    "Тяжёлое: потеря > 5% за 1 мес. (> 15% за 3 мес.), либо ИМТ < 18,5 с ухудшением состояния, либо потребление 0–25%"]},
+  {id:"sev", base:0, name:"Тяжесть заболевания (возросшая потребность)", opts:["Нет",
+    "Лёгкая: перелом шейки бедра, хроническое заболевание с осложнением, цирроз, ХОБЛ, гемодиализ, диабет, онкология",
+    "Умеренная: обширная операция на брюшной полости, инсульт, тяжёлая пневмония, гемобластоз",
+    "Тяжёлая: черепно-мозговая травма, трансплантация костного мозга, пациент ОРИТ с APACHE II > 10"],
+   auto:c => c.icu && c.apache != null && c.apache > 10 ? 3 : null},
+  {id:"age", base:0, name:"Возраст", opts:["< 70 лет","≥ 70 лет"],
+   auto:c => c.age === "" ? null : c.age >= 70 ? 1 : 0}
+];
+const MUST = [
+  {id:"bmi", base:0, name:"Индекс массы тела, кг/м²", opts:["> 20","18,5–20","< 18,5"],
+   auto:c => c.bmi == null ? null : c.bmi > 20 ? 0 : c.bmi >= 18.5 ? 1 : 2},
+  {id:"loss", base:0, name:"Непреднамеренная потеря массы тела за 3–6 мес.", opts:["< 5%","5–10%","> 10%"]},
+  {id:"acute", base:0, vals:[0,2], name:"Острое заболевание и отсутствие питания более 5 суток", opts:["Нет","Да"]}
+];
 /* подшкалы: значения идут от it.base (по умолчанию 1) либо задаются явно в it.vals */
 const subVals = it => it.vals ? it.vals : it.opts.map((_, k) => (it.base ?? 1) + k);
 const subLabel = (it, v) => { const k = subVals(it).indexOf(Number(v)); return k >= 0 ? it.opts[k] : "не оценено"; };
@@ -857,7 +928,31 @@ const SCALES = {
     note:"Претестовая вероятность ГИТ при тромбоцитопении на фоне гепарина (включая профилактические дозы и промывание катетеров). Низкая вероятность (≤ 3) практически исключает ГИТ; при 4 и выше — обсудить с врачом отмену гепарина, альтернативный антикоагулянт и иммунологическое подтверждение. Шкала не заменяет лабораторный тест."},
   isth:{name:"ISTH (явный ДВС)", short:"ДВС (ISTH)", kind:"sub", items:ISTH, lo:null, hi:4, who:"врач",
     interp:s => s >= 5 ? ["crit","соответствует явному ДВС"] : ["low","явного ДВС нет"],
-    note:"Применяется только при состоянии, предрасполагающем к ДВС (сепсис, травма, онкология, акушерские осложнения, тяжёлый панкреатит). 5 баллов и выше — явный ДВС; менее 5 — неявный ДВС, повторить оценку через 1–2 суток. Пороги для D-димера зависят от лаборатории — сверьте с вашей."}
+    note:"Применяется только при состоянии, предрасполагающем к ДВС (сепсис, травма, онкология, акушерские осложнения, тяжёлый панкреатит). 5 баллов и выше — явный ДВС; менее 5 — неявный ДВС, повторить оценку через 1–2 суток. Пороги для D-димера зависят от лаборатории — сверьте с вашей."},
+  sic:{name:"SIC (сепсис-индуцированная коагулопатия)", short:"SIC", kind:"sub", items:SIC, lo:null, hi:3, who:"врач",
+    interp:s => s >= 4 ? ["warn","соответствует сепсис-индуцированной коагулопатии"] : ["ok","признаков SIC нет"],
+    note:"Ранний маркёр коагулопатии при сепсисе: выявляет нарушение свёртывания до того, как разовьётся явный ДВС по ISTH. Применяется при подтверждённой или предполагаемой инфекции. 4 балла и выше — SIC; оценку повторяют при ухудшении и в динамике тромбоцитов."},
+  bps:{name:"BPS (боль у пациента на ИВЛ)", short:"BPS", kind:"sub", items:BPS, lo:null, hi:5, who:"медсестра",
+    interp:s => s >= 8 ? ["crit","выраженная боль"] : s >= 6 ? ["warn","недостаточное обезболивание"] : ["ok","боль контролируется"],
+    note:"Для пациентов на инвазивной ИВЛ, которые не могут сообщить о боли. Сумма 3–12; более 5 баллов означает недостаточное обезболивание. Это альтернатива CPOT — в отделении обычно используют одну из двух шкал, а не обе."},
+  nrs:{name:"NRS-2002 (нутритивный скрининг)", short:"NRS-2002", kind:"sub", items:NRS, lo:null, hi:2, who:"врач",
+    interp:s => s >= 3 ? ["warn","нутритивный риск: показана нутритивная поддержка"] : ["ok","нутритивного риска нет — повторить скрининг через неделю"],
+    note:"Скрининг недостаточности питания у госпитализированных пациентов, рекомендован ESPEN. Сумма 0–7; 3 балла и выше — начать нутритивную поддержку. У пациента ОРИТ с APACHE II выше 10 тяжесть заболевания предварительно отмечена как тяжёлая — проверьте."},
+  must:{name:"MUST (риск недостаточности питания)", short:"MUST", kind:"sub", items:MUST, lo:null, hi:1, who:"медсестра",
+    interp:s => s >= 2 ? ["warn","высокий риск недостаточности питания"] : s === 1 ? ["low","средний риск недостаточности питания"] : ["ok","низкий риск"],
+    note:"Простой скрининг из трёх пунктов, рассчитан в первую очередь на приёмный покой и отделения общего профиля. Сумма 0–6: 0 — низкий риск (повторять регулярно), 1 — средний (наблюдение и учёт питания), 2 и выше — высокий риск (нутритивная поддержка). У пациентов ОРИТ информативнее NUTRIC и NRS-2002."},
+  improvevte:{name:"Шкала IMPROVE-VTE (риск ВТЭО)", short:"IMPROVE-VTE", kind:"check", lo:null, hi:1, who:"врач",
+    ageFn:a => a === "" ? 0 : a > 60 ? 1 : 0,
+    interp:s => s >= 4 ? ["warn","высокий риск ВТЭО"] : s >= 2 ? ["low","промежуточный риск ВТЭО — показана профилактика"] : ["ok","низкий риск ВТЭО"],
+    note:"Риск венозных тромбоэмболических осложнений у нехирургических пациентов, разработана на той же когорте, что и шкала IMPROVE для кровотечения. 2–3 балла — профилактика показана, 4 и более — высокий риск. Оценивается вместе с риском кровотечения.",
+    items:[
+      {id:"vtehist", pts:3, name:"ВТЭО в анамнезе"},
+      {id:"thromb", pts:2, name:"Известная тромбофилия", auto:c => c.flag("thromb")},
+      {id:"paral", pts:2, name:"Паралич нижней конечности"},
+      {id:"cancer", pts:2, name:"Активное злокачественное новообразование", auto:c => RX.cancer.test(c.dx) || c.flag("cancer")},
+      {id:"immob7", pts:1, name:"Иммобилизация 7 суток и более", auto:c => (c.v("vent") ?? 0) === 2 || (c.v("rass") ?? 0) <= -3},
+      {id:"icu", pts:1, name:"Пребывание в ОРИТ или кардиореанимации", auto:c => c.icu}
+    ]}
 };
 const SCALE_IND = [
   {code:"_sofa", name:"SOFA", unit:"баллы", lo:0, hi:1, d:0},
@@ -869,11 +964,16 @@ const SCALE_IND = [
   {code:"_s_camicu", name:"CAM-ICU", unit:"", type:"sel", vals:[1,0,-1], opts:["Делирий выявлен","Делирия нет","Оценка невозможна"], short:["есть","нет","н/о"], lo:null, hi:0},
   {code:"_s_nutric", name:"NUTRIC", unit:"баллы", lo:null, hi:4, d:0},
   {code:"_s_cpot", name:"CPOT (боль)", unit:"баллы", lo:null, hi:2, d:0},
+  {code:"_s_bps", name:"BPS (боль на ИВЛ)", unit:"баллы", lo:null, hi:5, d:0},
+  {code:"_s_nrs", name:"NRS-2002", unit:"баллы", lo:null, hi:2, d:0},
+  {code:"_s_must", name:"MUST", unit:"баллы", lo:null, hi:1, d:0},
+  {code:"_s_improvevte", name:"IMPROVE-VTE (риск ВТЭО)", unit:"баллы", lo:null, hi:1, d:0},
   {code:"_s_fourt", name:"4T (ГИТ)", unit:"баллы", lo:null, hi:3, d:0},
-  {code:"_s_isth", name:"ISTH (ДВС)", unit:"баллы", lo:null, hi:4, d:0}
+  {code:"_s_isth", name:"ISTH (ДВС)", unit:"баллы", lo:null, hi:4, d:0},
+  {code:"_s_sic", name:"SIC (коагулопатия при сепсисе)", unit:"баллы", lo:null, hi:3, d:0}
 ];
 /* порядок карточек и плиток для оценочных шкал */
-const SCALE_ORDER = ["camicu", "cpot", "braden", "nutric", "caprini", "padua", "improve", "hasbled", "fourt", "isth"];
+const SCALE_ORDER = ["camicu", "cpot", "bps", "braden", "nutric", "nrs", "must", "caprini", "padua", "improvevte", "improve", "hasbled", "fourt", "isth", "sic"];
 function latestScale(entries, key){
   let best = null;
   for (const e of entries) if (e.scales?.[key] && (!best || e.takenAt > best.takenAt)) best = e;
@@ -889,13 +989,18 @@ function scaleCtx(p, entries){
   const T = sorted.length ? dataT(sorted) : Date.now();
   const st = stateAt(sorted, T, im), w = Number(p?.weight), h = Number(p?.height), age = ageOf(p?.birth);
   const flags = new Set();
-  for (const k of ["caprini", "padua", "improve", "hasbled"]) { const ls = latestScale(entries, k); if (ls) for (const [id, on] of Object.entries(ls.items || {})) if (on) flags.add(id); }
+  for (const k of ["caprini", "padua", "improve", "improvevte", "hasbled"]) { const ls = latestScale(entries, k); if (ls) for (const [id, on] of Object.entries(ls.items || {})) if (on) flags.add(id); }
+  /* SOFA по четырём системам нужен для SIC, APACHE II — для тяжести заболевания в NRS-2002 */
+  const so = sorted.length ? sofaAt(sorted, T, im) : null;
+  const sofa4 = so ? ["resp", "cv", "liver", "renal"].reduce((a, k) => a + (so.parts[k] ? so.parts[k].p : 0), 0) : null;
+  const ap = sorted.length ? apache2(sorted, p, im, T) : null;
   const pltS = seriesOf(sorted, "plt", T - 7 * 24 * H, T);
   let plt = null;
   if (pltS.length >= 2) { const last = pltS[pltS.length - 1], mx = pltS.slice(0, -1).reduce((m, x) => x.v > m.v ? x : m);
     plt = {last:last.v, max:mx.v, dropPct:mx.v > 0 ? (1 - last.v / mx.v) * 100 : 0}; }
   return {dx:p?.dx || "", age, sex:p?.sex || "", bmi:w && h ? w / Math.pow(h / 100, 2) : null, v:c => st[c]?.v,
-    gfr:egfr(st.crea?.v, age, p?.sex), icu:!!p?.icuAt || /ОРИТ|ОАРИТ|реанимац|интенсивн/i.test(p?.ward || ""), flag:id => flags.has(id), plt, sorted, im, T};
+    gfr:egfr(st.crea?.v, age, p?.sex), icu:!!p?.icuAt || /ОРИТ|ОАРИТ|реанимац|интенсивн/i.test(p?.ward || ""), flag:id => flags.has(id),
+    plt, sofa4, apache:ap ? ap.total : null, sorted, im, T};
 }
 const errW = n => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? "ошибка" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "ошибки" : "ошибок"; };
 function camEval(it){
@@ -938,7 +1043,9 @@ function scoreScale(key, items, p){
 const scFmt = (key, s) => SCALES[key]?.fmt ? SCALES[key].fmt(s) : s;
 function scaleDetail(key, rec, p){
   const sc = SCALES[key], it = rec.items || {};
-  if (sc.kind === "sub") return sc.items.map(x => `${x.name.toLowerCase()} ${it[x.id]} — ${subLabel(x, it[x.id])}`).join("; ");
+  /* строчная только первая буква и только если слово не аббревиатура (МНО, SOFA, ИМТ) */
+  const lcFirst = s => /^.[A-ZА-ЯЁ]/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1);
+  if (sc.kind === "sub") return sc.items.map(x => `${lcFirst(x.name)} ${it[x.id]} — ${subLabel(x, it[x.id])}`).join("; ");
   if (sc.kind === "cam") return camEval(it).steps.join(" ");
   if (sc.kind === "nutric") { const n = nutricEval(it); return (n.mod ? "mNUTRIC (без ИЛ-6): " : "NUTRIC: ") + n.parts.map(x => `${x.label} ${fNum(x.val)} (+${x.pts})`).join("; "); }
   const ageP = sc.ageFn ? sc.ageFn(ageOf(p?.birth)) : 0;
@@ -948,8 +1055,10 @@ function scaleDetail(key, rec, p){
 }
 function vteAdvice(entries){
   const c = latestScale(entries, "caprini"), pd = latestScale(entries, "padua"), hb = latestScale(entries, "hasbled"), im = latestScale(entries, "improve");
-  const vte = [c && c.score >= 5 && `Caprini ${c.score}`, pd && pd.score >= 4 && `Padua ${pd.score}`].filter(Boolean);
-  if (!c && !pd) return {level:"info", key:"vte-none"};
+  const iv = latestScale(entries, "improvevte");
+  const vte = [c && c.score >= 5 && `Caprini ${c.score}`, pd && pd.score >= 4 && `Padua ${pd.score}`, iv && iv.score >= 4 && `IMPROVE-VTE ${iv.score}`].filter(Boolean);
+  if (!c && !pd && !iv) return {level:"info", key:"vte-none"};
+  if (!vte.length && iv && iv.score >= 2) return {level:"info", key:"vte-mid", title:`Промежуточный риск ВТЭО (IMPROVE-VTE ${iv.score})`, text:"При 2–3 баллах по IMPROVE-VTE профилактика показана: проверить, назначена ли она и нет ли противопоказаний со стороны риска кровотечения."};
   if (!vte.length) return null;
   const bleed = [im && im.score >= 7 && `IMPROVE ${fNum(im.score)}`, hb && hb.score >= 3 && `HAS-BLED ${hb.score}`].filter(Boolean);
   if (bleed.length) return {level:"warn", key:"vte-bleed", title:`Высокий риск ВТЭО (${vte.join(", ")}) при высоком риске кровотечения (${bleed.join(", ")})`, text:"Взвесить механическую профилактику (перемежающаяся пневмокомпрессия) и сроки фармакологической; устранить модифицируемые факторы кровотечения, контролировать гемоглобин и тромбоциты."};
@@ -964,7 +1073,8 @@ function evaluate(entries, p){
   const v = c => st[c]?.v, A = [], minor = [];
   const COVERS = {shock:["sbp","dbp","lac"], map:["sbp","dbp"], si:["hr"], o2fail:["spo2"], pf:["po2"], aki:["crea","urea"], olig:["diur"],
     hbdrop:["hb","hct"], sshock:["lac","norad","adr","dopa"], ab:["ph","pco2","hco3","be"], pltdrop:["plt"], narate:["na"], krise:["k"], troprise:["trop"], dic:["plt","fib","inr","aptt","ddim"],
-    urine24:["diur24"], balpos:["fin","lossx"], balneg:["fin","lossx"], dp:["pplat","vt"], pplat:["pplat"], vtkg:["vt"], hit:["plt"], isth:["plt","fib","inr","aptt","ddim"], cpot:["pain"]};
+    urine24:["diur24"], balpos:["fin","lossx"], balneg:["fin","lossx"], dp:["pplat","vt"], pplat:["pplat"], vtkg:["vt"], hit:["plt"], isth:["plt","fib","inr","aptt","ddim"], cpot:["pain"],
+    cstat:["pplat","vt"], rres:["ppeak"], mp:["vt","ppeak"], bps:["pain"], sic:["plt","inr"]};
   const push = (level, key, title, text) => A.push({level, key, title, text, kind:key.startsWith("v:") || key === "minor" ? "value" : "rule", covers:COVERS[key.split(":")[0]] || []});
   const U = i => i.unit ? " " + i.unit : "";
 
@@ -1042,7 +1152,7 @@ function evaluate(entries, p){
     }
   }
   /* 7a. водный баланс за 24 ч и суммарный часовой диурез */
-  const fl = fluidAt(sorted, T, 24);
+  const fl = fluidAt(sorted, T, 24, p);
   if (fl) {
     const w = Number(p?.weight) || null;
     if (fl.nIn && fl.spanH >= 8) {
@@ -1063,6 +1173,15 @@ function evaluate(entries, p){
     push("warn", "pplat", `Давление плато ${fNum(v("pplat"), 0)} см вод. ст. (> 30)`, "Риск вентилятор-ассоциированного повреждения лёгких: оценить дыхательный объём, ПДКВ, растяжимость грудной стенки и внутрибрюшное давление.");
   if (der._vtkg != null && der._vtkg > 8)
     push("warn", "vtkg", `Дыхательный объём ${fNum(der._vtkg, 1)} мл/кг должной массы тела`, "Протективная вентиляция предполагает около 6 мл/кг должной массы тела (расчёт по росту и полу). Большие объёмы повышают риск повреждения лёгких.");
+  if (der._cstat != null && der._cstat < 30)
+    push(der._cstat < 20 ? "crit" : "warn", "cstat", `Статический комплаенс ${fNum(der._cstat, 1)} мл/см вод. ст.`,
+      "Низкая растяжимость лёгких: ОРДС, отёк лёгких, ателектазы, пневмоторакс, плевральный выпот; также внелёгочные причины — высокое внутрибрюшное давление, ригидность грудной стенки, асинхрония. Сопоставить с движущим давлением, оценить рентген или УЗИ лёгких и подбор ПДКВ.");
+  if (der._rres != null && der._rres > 10)
+    push("warn", "rres", `Резистивное давление ${fNum(der._rres, 0)} см вод. ст. (Ppeak ${fNum(v("ppeak"), 0)}, Pplat ${fNum(v("pplat"), 0)})`,
+      "Разница пикового давления и давления плато более 10 см вод. ст. указывает на высокое сопротивление дыхательных путей: мокрота в трубке, перегиб или прикусывание трубки, бронхоспазм, инородное тело. Санация, оценка проходимости трубки, аускультация; при бронхоспазме — обсудить бронхолитики с врачом.");
+  if (der._mp != null && der._mp > 17)
+    push("warn", "mp", `Механическая мощность ${fNum(der._mp, 1)} Дж/мин`,
+      "Мощность выше 17 Дж/мин связана с большей частотой вентилятор-ассоциированного повреждения лёгких. Складывается из дыхательного объёма, частоты и давлений — рассмотреть снижение объёма и частоты, оптимизацию ПДКВ.");
   const diurS = seriesOf(sorted, "diur", T - 6 * H, T);
   if (diurS.length >= 2) {
     const w = Number(p?.weight) || null, lim = w ? 0.5 * w : 30;
@@ -1126,14 +1245,27 @@ function evaluate(entries, p){
   else if (va) push(va.level, va.key, va.title, va.text);
   const nu = latestScale(entries, "nutric");
   if (nu && SCALES.nutric.interp(nu.score, nu.items)[0] === "warn") push("info", "nutric-high", `Высокий нутритивный риск (${nu.items?.il6 != null && nu.items.il6 !== "" ? "NUTRIC" : "mNUTRIC"} ${nu.score})`, "Пациенты с высоким NUTRIC получают наибольшую пользу от адекватной нутритивной поддержки: раннее энтеральное питание при стабильной гемодинамике, контроль достижения целевой энергии и белка, профилактика рефидинг-синдрома (фосфор, калий, магний).");
-  if (!nu && p?.icuAt) todo.push("нутритивный риск (NUTRIC)");
+  const nrs = latestScale(entries, "nrs"), must = latestScale(entries, "must");
+  if (nrs && nrs.score >= 3)
+    push("info", "nrs-high", `Нутритивный риск по NRS-2002: ${nrs.score} баллов`,
+      "3 балла и выше — показана нутритивная поддержка: раннее энтеральное питание при стабильной гемодинамике, расчёт целевой энергии и белка, контроль переносимости. При длительном голодании помнить о рефидинг-синдроме (фосфор, калий, магний).");
+  else if (must && must.score >= 2)
+    push("info", "must-high", `Высокий риск недостаточности питания по MUST: ${must.score} балла`,
+      "Высокий риск по MUST: оценить питание подробнее (NRS-2002 или NUTRIC), начать нутритивную поддержку и вести учёт фактического потребления.");
+  if (!nu && !nrs && !must && p?.icuAt) todo.push("нутритивный скрининг (NUTRIC, NRS-2002 или MUST)");
   /* боль у пациента без речевого контакта */
   const cpot = latestScale(entries, "cpot");
   if (cpot && T - tOf(cpot.at) <= 12 * H && cpot.score >= 3)
     push(cpot.score >= 5 ? "crit" : "warn", "cpot", `Боль по CPOT ${cpot.score}/8 (${fDT(cpot.at)})`,
       "Более 2 баллов означает значимую боль. Оценить адекватность обезболивания, особенно перед процедурами (санация, перевязки, позиционирование); нелеченая боль усиливает возбуждение, делирий и тахикардию.");
+  const bps = latestScale(entries, "bps");
+  if (bps && T - tOf(bps.at) <= 12 * H && bps.score >= 6)
+    push(bps.score >= 8 ? "crit" : "warn", "bps", `Боль по BPS ${bps.score}/12 (${fDT(bps.at)})`,
+      "Более 5 баллов означает недостаточное обезболивание у пациента на ИВЛ. Оценить схему аналгезии и обезболивание перед процедурами (санация, перевязки, позиционирование); нелеченая боль усиливает возбуждение, делирий, асинхронию с аппаратом и тахикардию.");
   const noVerbal = v("vent") === 2 || (rassNow != null && rassNow <= -2) || (v("gcs") != null && v("gcs") < 13);
-  if (noVerbal && (!cpot || Date.now() - tOf(cpot.at) > 12 * H)) todo.push(cpot ? `оценка боли по CPOT (последняя ${hoursStr(Date.now() - tOf(cpot.at))} назад)` : "оценка боли по CPOT — пациент не может оценить боль сам");
+  /* боль оценивают одной из двух шкал: берём ту, что проводилась позже */
+  const painSc = [cpot, bps].filter(Boolean).sort((a, b) => a.at < b.at ? 1 : -1)[0];
+  if (noVerbal && (!painSc || Date.now() - tOf(painSc.at) > 12 * H)) todo.push(painSc ? `оценка боли по CPOT или BPS (последняя ${hoursStr(Date.now() - tOf(painSc.at))} назад)` : "оценка боли по CPOT или BPS — пациент не может оценить боль сам");
   /* ГИТ и ДВС: шкалы предлагаются там, где сработали соответствующие правила */
   const ft = latestScale(entries, "fourt");
   if (ft && ft.score >= 4) push(ft.score >= 6 ? "crit" : "warn", "hit", `Вероятность ГИТ по шкале 4T: ${ft.score}/8 (${fDT(ft.at)})`,
@@ -1143,6 +1275,11 @@ function evaluate(entries, p){
   if (dic && dic.score >= 5) push("crit", "isth", `Явный ДВС по шкале ISTH: ${dic.score}/8 (${fDT(dic.at)})`,
     "Сумма 5 баллов и выше соответствует явному ДВС: лечение основного заболевания (чаще сепсис, травма, акушерские осложнения), контроль тромбоцитов, фибриногена, МНО и D-димера в динамике, оценка источника кровотечения.");
   else if (!dic && A.some(a => a.key === "dic")) todo.push("оценка ДВС по шкале ISTH");
+  const sic = latestScale(entries, "sic");
+  if (sic && sic.score >= 4) push("warn", "sic", `Сепсис-индуцированная коагулопатия: SIC ${sic.score}/6 (${fDT(sic.at)})`,
+    "SIC выявляет коагулопатию раньше, чем явный ДВС по ISTH: контроль тромбоцитов, МНО и фибриногена в динамике, лечение источника инфекции, оценка риска кровотечения перед инвазивными манипуляциями. При нарастании — пересчитать ISTH.");
+  else if (!sic && (RX.sepsis.test(p?.dx || "") || A.some(a => a.key === "sshock")) && v("plt") != null && v("plt") < 150)
+    todo.push("оценка SIC — тромбоцитопения при сепсисе");
   if (todo.length) push("info", "todo", "Плановые оценки", "Пора выполнить: " + todo.join("; ") + ".");
   const coveredMinor = c => A.some(a => a.kind === "rule" && a.covers.includes(c));
   const minorLeft = minor.filter(m => !coveredMinor(m.c));
@@ -1240,7 +1377,7 @@ function boardHTML(){
     const sev = s.vent && s.sofa != null ? `SOFA ${s.sofa}` : s.news != null ? `NEWS2 ${s.news}` : "—";
     const cls = s.crit ? "crit" : s.warn ? "out" : "";
     const a = ageOf(p.birth);
-    return `<tr><td><button class="linkbtn" type="button" data-pid="${esc(p.id)}">${esc(p.name)}</button>${p.discharged ? ` <span class="faint">выписан</span>` : ""}
+    return `<tr><td><button class="linkbtn" type="button" data-pid="${esc(p.id)}">${esc(p.name)}</button>${p.discharged ? ` <span class="faint">выписан</span> <button class="linkbtn" type="button" data-arch="${esc(p.id)}">архивировать</button>` : ""}
         <div class="faint" style="font-size:12.5px">${esc([p.room && "пал. " + p.room, a !== "" && `${a} ${yearsWord(a)}`, p.dx].filter(Boolean).join(" · "))}</div></td>
       <td class="r"><b class="${cls}">${esc(sev)}</b>${s.vent ? `<div class="faint" style="font-size:12px">ИВЛ</div>` : ""}</td>
       <td class="r ${s.crit ? "crit" : ""}">${s.crit || "—"}</td><td class="r ${s.warn ? "out" : ""}">${s.warn || "—"}</td>
@@ -1296,11 +1433,16 @@ function sumHTML(){
   if (d._ag != null) { const ag = d._agc ?? d._ag; tiles.push({l:"Анионный интервал", v:fNum(ag, 1), s:d._agc != null ? "с поправкой на альбумин" : "без K⁺, норма 8–12", c:ag > 12 ? "warn" : "ok"}); }
   if (v("lac") != null) tiles.push({l:"Лактат", v:fNum(v("lac"), 1), s:"ммоль/л", c:v("lac") >= 4 ? "crit" : v("lac") > 2 ? "warn" : "ok"});
   if (d._dp != null) tiles.push({l:"Движущее давление", v:fNum(d._dp, 0), s:"Pplat − ПДКВ, цель ≤ 14", c:d._dp >= 18 ? "crit" : d._dp > 14 ? "warn" : "ok"});
+  if (d._cstat != null) tiles.push({l:"Комплаенс", v:fNum(d._cstat, 1), s:"мл/см вод. ст., норма > 40", c:d._cstat < 20 ? "crit" : d._cstat < 30 ? "warn" : "ok"});
+  if (d._rres != null) tiles.push({l:"Резистивное давление", v:fNum(d._rres, 0), s:"Ppeak − Pplat, норма ≤ 10", c:d._rres > 10 ? "warn" : "ok"});
+  if (d._mp != null) tiles.push({l:"Механическая мощность", v:fNum(d._mp, 1), s:"Дж/мин, цель ≤ 17", c:d._mp > 17 ? "warn" : "ok"});
   if (r.fluid && (r.fluid.nIn || r.fluid.nUr)) { const f = r.fluid, w = Number(p?.weight) || null;
     tiles.push({l:"Баланс за 24 ч", v:(f.bal > 0 ? "+" : "") + fNum(f.bal, 0), s:`введено ${fNum(f.in, 0)}, выведено ${fNum(f.out, 0)} мл${w ? `; ${(f.bal > 0 ? "+" : "") + fNum(f.bal / w, 0)} мл/кг` : ""}`,
       c:Math.abs(f.bal) >= 4000 ? "warn" : Math.abs(f.bal) >= 2000 ? "warn" : "ok"});
     if (f.nUr) { const perDay = f.urine / Math.max(f.spanH, 1) * 24;
-      tiles.push({l:"Диурез (сумма)", v:fNum(f.urine, 0), s:`за ${hoursStr(f.spanH * H)}${w ? `, ${fNum(f.urine / Math.max(f.spanH, 1) / w, 2)} мл/кг/ч` : ""}`, c:perDay < 200 ? "crit" : perDay < 500 ? "warn" : "ok"}); } }
+      tiles.push({l:"Диурез (сумма)", v:fNum(f.urine, 0), s:`за ${hoursStr(f.spanH * H)}${w ? `, ${fNum(f.urine / Math.max(f.spanH, 1) / w, 2)} мл/кг/ч` : ""}`, c:perDay < 200 ? "crit" : perDay < 500 ? "warn" : "ok"}); }
+    if (f.insens != null) tiles.push({l:"Баланс с потерями", v:(f.balc > 0 ? "+" : "") + fNum(f.balc, 0),
+      s:`оценка неощутимых потерь ${fNum(f.insens, 0)} мл${f.tAvg != null ? `, средняя t° ${fNum(f.tAvg, 1)}` : ""}`, c:Math.abs(f.balc) >= 2000 ? "warn" : "ok"}); }
   const ap = apache2(sortAsc(S.entries), p, indMap(p), r.T);
   if (ap) tiles.splice(1, 0, {l:"APACHE II", v:ap.total, s:`летальность ${ap.mort}${ap.partial ? ", данные неполные" : ""}`, c:ap.total >= 25 ? "crit" : ap.total >= 15 ? "warn" : "ok"});
   if (r.sofa) tiles.splice(1, 0, {l:"SOFA", v:r.sofa.total, s:r.sofaD ? `изменение ${r.sofaD.delta > 0 ? "+" : ""}${r.sofaD.delta} к исходному` : "за 24 ч", c:r.sofa.total >= 11 || (r.sofaD && r.sofaD.delta >= 4) ? "crit" : r.sofa.total >= 6 || (r.sofaD && r.sofaD.delta >= 2) ? "warn" : "ok"});
@@ -1383,7 +1525,10 @@ function buildPrompt(p){
   if (d._ag != null) sc.push(`анионный интервал = ${fNum(d._ag, 1)}${d._agc != null ? ` (с поправкой на альбумин ${fNum(d._agc, 1)})` : ""}`);
   if (d._dp != null) sc.push(`движущее давление = ${fNum(d._dp, 0)} см вод. ст.`);
   if (d._vtkg != null) sc.push(`дыхательный объём = ${fNum(d._vtkg, 1)} мл/кг должной массы тела`);
-  if (r.fluid && (r.fluid.nIn || r.fluid.nUr)) sc.push(`баланс жидкости за ${hoursStr(r.fluid.spanH * H)} = ${r.fluid.bal > 0 ? "+" : ""}${fNum(r.fluid.bal, 0)} мл (введено ${fNum(r.fluid.in, 0)}, диурез ${fNum(r.fluid.urine, 0)}${r.fluid.other ? `, прочие потери ${fNum(r.fluid.other, 0)}` : ""} мл)`);
+  if (d._cstat != null) sc.push(`статический комплаенс = ${fNum(d._cstat, 1)} мл/см вод. ст.`);
+  if (d._rres != null) sc.push(`резистивное давление (Ppeak − Pplat) = ${fNum(d._rres, 0)} см вод. ст.`);
+  if (d._mp != null) sc.push(`механическая мощность = ${fNum(d._mp, 1)} Дж/мин`);
+  if (r.fluid && (r.fluid.nIn || r.fluid.nUr)) sc.push(`баланс жидкости за ${hoursStr(r.fluid.spanH * H)} = ${r.fluid.bal > 0 ? "+" : ""}${fNum(r.fluid.bal, 0)} мл (введено ${fNum(r.fluid.in, 0)}, диурез ${fNum(r.fluid.urine, 0)}${r.fluid.other ? `, прочие потери ${fNum(r.fluid.other, 0)}` : ""} мл)${r.fluid.insens != null ? `; с учётом расчётных неощутимых потерь ${fNum(r.fluid.insens, 0)} мл — ${r.fluid.balc > 0 ? "+" : ""}${fNum(r.fluid.balc, 0)} мл (оценка, а не измерение)` : ""}`);
   if (r.sofa) sc.push(`SOFA = ${r.sofa.total} (${SOFA_SYS.map(([k, n]) => `${n.toLowerCase()}: ${r.sofa.parts[k] ? r.sofa.parts[k].p + " — " + r.sofa.parts[k].src : "нет данных"}`).join("; ")})${r.sofaD ? `; изменение к минимуму за предыдущие 12–72 ч: ${r.sofaD.delta > 0 ? "+" : ""}${r.sofaD.delta}` : ""}`);
   const apc = apache2(sorted, p, im, r.T); if (apc) sc.push(`APACHE II = ${apc.total} (${apc.win}; ориентировочная летальность ${apc.mort}${apc.missing.length ? "; нет данных: " + apc.missing.join(", ") : ""})`);
   if (r.st.vent) sc.push(`респираторная поддержка: ${optLabel(im.vent, r.st.vent.v)}${r.st.vent.v === 2 ? " (NEWS2 на ИВЛ не применим)" : ""}`);
@@ -1660,9 +1805,11 @@ function dynHTML(){
   }
   for (const e of ents) if (SOFA_INPUTS.some(c => e.values?.[c] != null)) { const so = sofaAt(all, tOf(e.takenAt), im); if (so) (series._sofa ||= []).push({t:e.takenAt, v:so.total, nurse:"расчёт"}); }
   for (const e of ents) if (["fin","diur","lossx"].some(c => e.values?.[c] != null)) {
-    const fl = fluidAt(all, tOf(e.takenAt), 24); if (!fl) continue;
+    const fl = fluidAt(all, tOf(e.takenAt), 24, p); if (!fl) continue;
     if (fl.nUr) (series._urine24 ||= []).push({t:e.takenAt, v:Math.round(fl.urine), nurse:"расчёт"});
     if (fl.nIn) (series._bal24 ||= []).push({t:e.takenAt, v:Math.round(fl.bal), nurse:"расчёт"});
+    if (fl.insens != null) (series._insens24 ||= []).push({t:e.takenAt, v:Math.round(fl.insens), nurse:"оценка"});
+    if (fl.nIn && fl.balc != null) (series._balc24 ||= []).push({t:e.takenAt, v:Math.round(fl.balc), nurse:"расчёт"});
   }
   for (const e of ents) for (const [k, x] of Object.entries(e.scales || {})) (series["_s_" + k] ||= []).push({t:e.takenAt, v:x.score, nurse:e.nurse});
   const row = ind => {
@@ -1766,6 +1913,7 @@ function selectPatient(id){
   if (S.ai.ctl) S.ai.ctl.abort();
   Object.assign(S, {selected:id, entries:[], entriesAll:[], draft:{}, draftNote:"", draftWhen:nowLocal(), newKeys:new Set(), toast:null, ai:{busy:false, text:"", ctl:null, err:""}});
   S.open.clear(); S.view = S.role === "nurse" ? "add" : "sum";
+  if (S.alarm) { S.alarm = null; renderAlarm(); }
   renderSidebar(); renderMain();
   if (id) S.unsubE = S.store.listenEntries(id, list => {
     if (S.selected !== id) return;
@@ -1781,6 +1929,7 @@ function storeErr(e){
 }
 async function persistSummary(p, entries){
   const fresh = S.patients.find(x => x.id === p.id) || p;
+  S.selfSave = {pid:p.id, t:Date.now()};
   await S.store.setPatient(p.id, {...patientBody(fresh), sum:summaryOf(fresh, entries)});
 }
 
@@ -1844,7 +1993,8 @@ function openPatientDialog(p){
     </div>
     <p class="faint" style="font-size:13px">Пол, масса и рост нужны для норм, диуреза в мл/кг/ч, ИМТ и должной массы тела (дыхательный объём). Хроническая недостаточность по APACHE II: подтверждённый цирроз, ХСН IV ФК, тяжёлая ХОБЛ с гиперкапнией или домашней кислородотерапией, хронический диализ, иммуносупрессия. Шкала SpO₂ 2 применяется только к пациентам с подтверждённой хронической гиперкапнической дыхательной недостаточностью и назначается врачом. Выписанные пациенты скрываются из списка, но их записи сохраняются.</p>
     <span class="msg err" id="pMsg"></span>
-    <div class="foot">${p ? `<button class="btn danger" type="button" id="delPatient" style="margin-right:auto">Удалить пациента</button>` : ""}
+    <div class="foot">${p ? `<button class="btn danger" type="button" id="delPatient" style="margin-right:auto">Удалить пациента</button>
+      <button class="btn ghost" type="button" data-arch="${esc(p.id)}">Архивировать с выгрузкой</button>` : ""}
       <button class="btn ghost" value="cancel" formnovalidate>Отмена</button><button class="btn primary" type="submit" value="ok">${p ? "Сохранить" : "Добавить пациента"}</button></div>`;
   f.onsubmit = async ev => {
     if (ev.submitter && ev.submitter.value === "cancel") return;
@@ -1894,11 +2044,11 @@ function sbarText(){
   L.push(`Последние данные: ${fDTfull(new Date(r.T).toISOString())} (${hoursStr(Math.max(Date.now() - r.T, 60e3))} назад).`);
   const vit = ["sbp","dbp","hr","rr","spo2","temp","avpu","gcs","rass"].map(val).filter(Boolean);
   if (vit.length) L.push(`Витальные: ${vit.join("; ")}${d._map != null ? `; среднее АД ${fNum(d._map, 0)}` : ""}.`);
-  const sup = ["vent","fio2","peep","pplat","vt","norad","adr","dopa","dobu"].map(val).filter(Boolean);
-  if (sup.length) L.push(`Поддержка: ${sup.join("; ")}${d._dp != null ? `; движущее давление ${fNum(d._dp, 0)}` : ""}${d._pf != null ? `; P/F ${fNum(d._pf, 0)}` : ""}.`);
+  const sup = ["vent","fio2","peep","pplat","ppeak","vt","norad","adr","dopa","dobu"].map(val).filter(Boolean);
+  if (sup.length) L.push(`Поддержка: ${sup.join("; ")}${d._dp != null ? `; движущее давление ${fNum(d._dp, 0)}` : ""}${d._cstat != null ? `; комплаенс ${fNum(d._cstat, 1)}` : ""}${d._mp != null ? `; механическая мощность ${fNum(d._mp, 1)} Дж/мин` : ""}${d._pf != null ? `; P/F ${fNum(d._pf, 0)}` : ""}.`);
   const lab = ["hb","plt","wbc","crp","pct","lac","ph","k","na","crea","bil","inr","fib","ddim"].map(val).filter(Boolean);
   if (lab.length) L.push(`Анализы: ${lab.join("; ")}.`);
-  if (r.fluid && (r.fluid.nIn || r.fluid.nUr)) L.push(`Баланс за 24 ч: ${r.fluid.bal > 0 ? "+" : ""}${fNum(r.fluid.bal, 0)} мл (введено ${fNum(r.fluid.in, 0)}, диурез ${fNum(r.fluid.urine, 0)}${r.fluid.other ? `, прочие потери ${fNum(r.fluid.other, 0)}` : ""} мл).`);
+  if (r.fluid && (r.fluid.nIn || r.fluid.nUr)) L.push(`Баланс за 24 ч: ${r.fluid.bal > 0 ? "+" : ""}${fNum(r.fluid.bal, 0)} мл (введено ${fNum(r.fluid.in, 0)}, диурез ${fNum(r.fluid.urine, 0)}${r.fluid.other ? `, прочие потери ${fNum(r.fluid.other, 0)}` : ""} мл)${r.fluid.insens != null ? `; с расчётными неощутимыми потерями ${fNum(r.fluid.insens, 0)} мл — ${r.fluid.balc > 0 ? "+" : ""}${fNum(r.fluid.balc, 0)} мл` : ""}.`);
   const sc = [];
   if (r.news && v("vent") !== 2) sc.push(`NEWS2 ${r.news.score}`);
   if (r.sofa) sc.push(`SOFA ${r.sofa.total}${r.sofaD ? ` (изменение ${r.sofaD.delta > 0 ? "+" : ""}${r.sofaD.delta})` : ""}`);
@@ -1944,6 +2094,68 @@ function openSbar(){
     catch(e) { if (e && ["unavailable","not_granted","capability_disabled"].includes(e.code)) { S.downloads = null; $("#sbarMsg").textContent = "Сохранение файлов недоступно в этом просмотре."; } }
   };
   $("#dlgSbar").showModal();
+}
+
+/* ---------- уведомления о новых критических сигналах ---------- */
+function renderNotifyBtn(){
+  const b = $("#notifyBtn"); if (!b) return;
+  b.textContent = S.notify ? "Уведомления: вкл" : "Уведомления: выкл";
+  b.setAttribute("aria-pressed", String(S.notify));
+}
+function unlockSound(){
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    if (!S.audio) S.audio = new AC();
+    if (S.audio.state === "suspended") S.audio.resume();
+  } catch(e) { S.audio = null; }
+}
+function beep(times){
+  if (!S.audio) return;
+  try {
+    const ctx = S.audio;
+    for (let k = 0; k < times; k++) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime + k * 0.42;
+      o.type = "sine"; o.frequency.setValueAtTime(k % 2 ? 740 : 988, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.32);
+      o.connect(g); g.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.35);
+    }
+  } catch(e) {}
+}
+async function toggleNotify(){
+  S.notify = !S.notify;
+  lsSet("icu-notify", S.notify ? "1" : "0");
+  if (S.notify) {
+    unlockSound(); beep(1);
+    try { if (window.Notification && Notification.permission === "default") await Notification.requestPermission(); } catch(e) {}
+  } else { S.alarm = null; renderAlarm(); }
+  renderNotifyBtn();
+}
+function renderAlarm(){
+  const el = $("#alarm"); if (!el) return;
+  if (!S.alarm) { el.innerHTML = ""; return; }
+  const list = S.alarm.items.map(x => `<button class="linkbtn" type="button" data-pid="${esc(x.id)}">${esc(x.name)}</button> +${x.n}`).join(", ");
+  el.innerHTML = `<div class="alarmbar" role="alert"><b>Новые критические сигналы</b><span>${list}</span><span class="grow"></span>
+    <span class="faint">${fDT(S.alarm.at)}</span><button class="btn ghost" type="button" data-act="alarmClose">Закрыть</button></div>`;
+}
+/* сравнение со снимком списка пациентов: у кого выросло число критических сигналов */
+function checkAlerts(list){
+  const fired = [];
+  for (const p of list) {
+    if (p.discharged) { S.critSeen.delete(p.id); continue; }
+    const cur = (p.sum && p.sum.crit) || 0, prev = S.critSeen.get(p.id);
+    S.critSeen.set(p.id, cur);
+    if (prev == null || cur <= prev) continue;
+    /* не оповещаем того, кто сам только что внёс эти данные — он уже увидел сводку */
+    if (S.selfSave.pid === p.id && Date.now() - S.selfSave.t < 8000) continue;
+    fired.push({id:p.id, name:p.name || "Без имени", n:cur - prev});
+  }
+  if (!fired.length || !S.notify) return;
+  S.alarm = {items:fired, at:new Date().toISOString()};
+  renderAlarm(); beep(3);
+  const txt = fired.map(x => `${x.name}: +${x.n}`).join("; ");
+  try { if (window.Notification && Notification.permission === "granted") new Notification("Интенсивное наблюдение: новые критические сигналы", {body:txt, tag:"icu-crit"}); } catch(e) {}
 }
 
 function renderMeBtn(){
@@ -2046,6 +2258,73 @@ function openNorms(){
   $("#dlgNorms").showModal();
 }
 
+/* ---------- архивирование выписанного пациента ---------- */
+function archiveCSV(p, entries){
+  const im = indMap(p), q = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
+  const lines = [["Пациент","Время измерения","Показатель","Значение","Единицы","Норма","Отклонение","Внёс(ла)","Роль","Создано","Примечание","Аннулирование"].map(q).join(";")];
+  const vd = e => e.void ? `${fDTfull(e.void.at)}, ${e.void.by || "—"}: ${e.void.reason}` : "";
+  for (const e of sortAsc(entries)) {
+    const meta = [e.nurse, e.role ? roleName(e.role) : "", e.createdAt ? fDTfull(e.createdAt) : ""];
+    for (const [c, v] of Object.entries(e.values || {})) { const i = im[c] || {name:c, unit:"", lo:null, hi:null};
+      lines.push([p.name, fDTfull(e.takenAt), i.name, i.type === "sel" ? optLabel(i, v) : String(v).replace(".", ","), i.unit, refText(i),
+        isCrit(c, v) ? "критично" : (c !== "o2" && isOut(i, v)) ? "да" : "", ...meta, e.note, vd(e)].map(q).join(";")); }
+    for (const [k, x] of Object.entries(e.scales || {})) { const sc = SCALES[k]; if (!sc) continue;
+      lines.push([p.name, fDTfull(e.takenAt), sc.name, String(scFmt(k, x.score)).replace(".", ","), sc.kind === "cam" ? "" : "баллы", "",
+        sc.interp(x.score, x.items)[1], ...meta, scaleDetail(k, x, p), vd(e)].map(q).join(";")); }
+  }
+  return "﻿" + lines.join("\r\n");
+}
+async function openArchiveDialog(p){
+  if (!p) return;
+  try { $("#dlgPatient").close(); } catch(e) {}
+  const el = $("#archBody");
+  el.innerHTML = `<h2>Архивировать пациента</h2><p class="muted">Читаю записи…</p>`;
+  $("#dlgArchive").showModal();
+  let entries = [];
+  try { entries = await S.store.getEntries(p.id); }
+  catch(e) { el.innerHTML = `<h2>Архивировать пациента</h2><span class="msg err">${esc(storeErr(e))}</span>
+    <div class="foot"><button class="btn primary" type="button" data-act="archClose">Закрыть</button></div>`; return; }
+  const sorted = sortAsc(entries), voided = entries.filter(e => e.void).length;
+  const span = entries.length ? `${fDTfull(sorted[0].takenAt)} — ${fDTfull(sorted[sorted.length - 1].takenAt)}` : "записей нет";
+  el.innerHTML = `<h2>Архивировать пациента</h2>
+    <p class="muted" style="margin-top:0;font-size:14px">Архивирование выгружает все записи двумя файлами — CSV для чтения и JSON со всеми полями — и затем <b>безвозвратно удаляет</b> их из общей базы вместе с карточкой. Это освобождает место: в базе не более 5 000 документов, а каждая запись занимает отдельный документ. После удаления данные останутся только в выгруженных файлах, поэтому сохраните их туда, где по порядку отделения хранится медицинская документация.</p>
+    <div class="card" style="margin-bottom:14px"><div class="eh"><b>${esc(p.name)}</b><span class="muted">${esc([p.room && "палата " + p.room, p.card && "история № " + p.card].filter(Boolean).join(", "))}</span></div>
+      <div class="vals"><span>Записей: <b>${entries.length}</b></span><span>Аннулированных: <b>${voided}</b></span><span>Период: <b>${esc(span)}</b></span></div></div>
+    ${S.downloads ? "" : `<div class="banner err" style="margin:0 0 12px">Сохранение файлов недоступно в этом просмотре, поэтому архивировать нельзя: выгрузка обязательна.</div>`}
+    ${p.discharged ? "" : `<div class="banner" style="margin:0 0 12px">Пациент не помечен как выписанный. Обычно архивируют только выписанных или переведённых.</div>`}
+    <label class="f">Кто архивирует<input id="archBy" value="${esc(S.nurse)}" placeholder="ФИО"></label>
+    <span class="msg err" id="archMsg"></span>
+    <div class="foot"><button class="btn ghost" type="button" data-act="archClose">Отмена</button>
+      <button class="btn danger" type="button" id="archGo" ${S.downloads ? "" : "disabled"}>Выгрузить и удалить</button></div>`;
+  const go = $("#archGo");
+  if (!go) return;
+  go.onclick = async () => {
+    const by = $("#archBy").value.trim(), msg = $("#archMsg");
+    msg.className = "msg err";
+    if (!by) { msg.textContent = "Укажите, кто архивирует пациента."; return; }
+    if (!confirm(`Выгрузить и удалить все записи пациента «${p.name}» (${entries.length})? После этого данные останутся только в сохранённых файлах.`)) return;
+    go.disabled = true; msg.className = "msg"; msg.textContent = "Сохраняю файлы…";
+    const stamp = new Date().toISOString().slice(0, 10);
+    const dump = {app:"Интенсивное наблюдение", version:"2.1", exportedAt:new Date().toISOString(), exportedBy:by,
+      patient:patientBody(p), entries:entries.map(entryBody), config:S.config};
+    try {
+      await S.downloads.save({filename:`Архив — ${p.name} — ${stamp}.json`, data:JSON.stringify(dump, null, 1)});
+      await S.downloads.save({filename:`Архив — ${p.name} — ${stamp}.csv`, data:archiveCSV(p, entries)});
+    } catch(e) {
+      msg.className = "msg err";
+      msg.textContent = (e && ["unavailable","not_granted","capability_disabled"].includes(e.code))
+        ? "Сохранение файлов недоступно — пациент не удалён." : "Не удалось сохранить файлы — пациент не удалён.";
+      go.disabled = false; return;
+    }
+    msg.textContent = "Файлы сохранены, удаляю записи из базы…";
+    try { await S.store.deletePatient(p.id); }
+    catch(e) { msg.className = "msg err"; msg.textContent = storeErr(e) + " Файлы выгружены, данные в базе остались."; go.disabled = false; return; }
+    S.nurse = by; lsSet("icu-nurse", by); renderMeBtn();
+    $("#dlgArchive").close();
+    if (S.selected === p.id) selectPatient(null);
+  };
+}
+
 async function exportCSV(){
   const p = currentPatient(); if (!p || !S.downloads) return;
   const im = indMap(p), q = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
@@ -2079,7 +2358,11 @@ document.addEventListener("click", ev => {
     case "aiRun": return runAI();
     case "goRass": S.view = "add"; S.draftGroup = "vitals"; renderTabs(); renderBody(); setTimeout(() => { const el = document.querySelector('[name="v_rass"]'); if (el) el.focus(); }, 30); return;
     case "aiStop": return S.ai.ctl && S.ai.ctl.abort();
+    case "alarmClose": S.alarm = null; return renderAlarm();
+    case "archClose": return $("#dlgArchive").close();
+    case "swUpdate": swBar(""); return S.swReg && S.swReg.waiting && S.swReg.waiting.postMessage("skipWaiting");
   }
+  if (t.dataset.arch) return openArchiveDialog(S.patients.find(p => p.id === t.dataset.arch));
 });
 function onDraftInput(t){
   if (t.name && t.name.startsWith("v_")) {
@@ -2103,7 +2386,36 @@ document.addEventListener("submit", ev => { if (ev.target.id === "fEntry") { ev.
 $("#addPatientBtn").onclick = () => openPatientDialog(null);
 $("#normsBtn").onclick = openNorms;
 $("#meBtn").onclick = openMe;
-renderMeBtn();
+$("#notifyBtn").onclick = toggleNotify;
+renderMeBtn(); renderNotifyBtn();
+
+/* ================= установка как приложение (PWA) ================= */
+/* Service worker делает приложение устанавливаемым и работающим без сети.
+   Внутри артефакта Claude страница открыта во вложенном окне, где регистрация недоступна,
+   поэтому там этот блок молча пропускается, а приложение работает как прежде. */
+function swBar(html){ const el = $("#swbar"); if (el) el.innerHTML = html; }
+function initPWA(){
+  if (!("serviceWorker" in navigator) || !location.protocol.startsWith("http")) return;
+  if (window.top !== window.self) return;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloading) { reloading = true; location.reload(); } });
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    const offer = () => swBar(`<div class="banner">Загружена новая версия приложения. <button class="btn ghost" type="button" data-act="swUpdate">Обновить</button></div>`);
+    if (reg.waiting && navigator.serviceWorker.controller) offer();
+    reg.addEventListener("updatefound", () => {
+      const w = reg.installing; if (!w) return;
+      w.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) offer(); });
+    });
+    S.swReg = reg;
+  }).catch(() => {});
+}
+function renderNet(){
+  const el = $("#netbar"); if (!el) return;
+  el.innerHTML = navigator.onLine === false
+    ? `<div class="banner">Нет связи с сетью. Приложение продолжает работать: расчёты, шкалы и сигналы считаются на устройстве. Записи других сотрудников появятся после восстановления связи.</div>` : "";
+}
+window.addEventListener("online", renderNet);
+window.addEventListener("offline", renderNet);
 
 /* ================= запуск ================= */
 function start(store, live){
@@ -2112,6 +2424,7 @@ function start(store, live){
   if (!live) $("#banner").innerHTML = `<div class="banner">Общая база недоступна в этом просмотре — данные сохраняются только в этом браузере.</div>`;
   store.listenPatients(list => {
     S.patients = list;
+    checkAlerts(list);
     if (S.selected && !list.some(p => p.id === S.selected)) return selectPatient(null);
     renderSidebar();
     if (!S.selected) return renderMain();
@@ -2120,7 +2433,7 @@ function start(store, live){
   }, onDbError);
   store.listenConfig(cfg => { S.config = {overrides:{}, crit:{}, ...(cfg || {})}; applyCritConfig(S.config); renderSidebar(); if (S.view !== "add" && !S.ai.busy) renderBody(); }, onDbError);
 }
-renderMain();
+renderMain(); renderNet(); initPWA();
 (async () => {
   let db = null;
   if (window.claude && typeof window.claude.use === "function") {

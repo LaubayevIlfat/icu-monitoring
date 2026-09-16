@@ -1,0 +1,9 @@
+# служебные файлы ОС и OneDrive
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# локальные заметки и черновики
+*.local
+*.tmp
+scratch/

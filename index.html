@@ -2,13 +2,15 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Интенсивное наблюдение — отклонения и интерпретация</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#1D5DA6">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0E1521">
 <meta name="description" content="Мониторинг тяжёлых пациентов: отклонения от нормы, шкалы тяжести и интерпретация">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Наблюдение">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png" type="image/png">
@@ -271,6 +273,11 @@ dialog#dlgSbar{width:min(760px,94vw)}
   .row .ind{grid-area:ind}.row .val{grid-area:val}.row .spark{grid-area:spark}.row .delta{grid-area:delta}.row .when{display:none}
   .seg button{padding:6px 9px}
 }
+/* в установленном приложении нет адресной строки: учитываем вырезы экрана */
+@media (display-mode: standalone), (display-mode: minimal-ui), (display-mode: fullscreen){
+  body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .app{min-height:calc(100vh - 55px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+}
 @media print{.top,aside,.tabs,.toolbar,.acts,.banner,.aibar .btn{display:none!important}.app{display:block}body{background:#fff}}
 </style>
 </head>
@@ -281,6 +288,7 @@ dialog#dlgSbar{width:min(760px,94vw)}
   <button class="btn ghost" id="meBtn" type="button">Кто я</button>
   <button class="btn ghost" id="notifyBtn" type="button" aria-pressed="false">Уведомления</button>
   <button class="btn ghost" id="normsBtn" type="button">Нормы</button>
+  <button class="btn ghost" id="installBtn" type="button" hidden>Установить</button>
 </header>
 <div id="banner"></div>
 <div id="netbar"></div>
@@ -540,6 +548,7 @@ function RemoteStore(db){
 
 /* ================= состояние ================= */
 const S = {
+  installPrompt: null,
   store:null, downloads:null, sample:null,
   patients:[], selected:null, entries:[], entriesAll:[], config:{overrides:{}, crit:{}},
   view:"sum", period:"72", open:new Set(), q:"", showDischarged:false,
@@ -2305,7 +2314,7 @@ async function openArchiveDialog(p){
     if (!confirm(`Выгрузить и удалить все записи пациента «${p.name}» (${entries.length})? После этого данные останутся только в сохранённых файлах.`)) return;
     go.disabled = true; msg.className = "msg"; msg.textContent = "Сохраняю файлы…";
     const stamp = new Date().toISOString().slice(0, 10);
-    const dump = {app:"Интенсивное наблюдение", version:"2.1", exportedAt:new Date().toISOString(), exportedBy:by,
+    const dump = {app:"Интенсивное наблюдение", version:"2.1.1", exportedAt:new Date().toISOString(), exportedBy:by,
       patient:patientBody(p), entries:entries.map(entryBody), config:S.config};
     try {
       await S.downloads.save({filename:`Архив — ${p.name} — ${stamp}.json`, data:JSON.stringify(dump, null, 1)});
@@ -2361,6 +2370,7 @@ document.addEventListener("click", ev => {
     case "alarmClose": S.alarm = null; return renderAlarm();
     case "archClose": return $("#dlgArchive").close();
     case "swUpdate": swBar(""); return S.swReg && S.swReg.waiting && S.swReg.waiting.postMessage("skipWaiting");
+    case "swClose": return swBar("");
   }
   if (t.dataset.arch) return openArchiveDialog(S.patients.find(p => p.id === t.dataset.arch));
 });
@@ -2394,7 +2404,34 @@ renderMeBtn(); renderNotifyBtn();
    Внутри артефакта Claude страница открыта во вложенном окне, где регистрация недоступна,
    поэтому там этот блок молча пропускается, а приложение работает как прежде. */
 function swBar(html){ const el = $("#swbar"); if (el) el.innerHTML = html; }
+
+/* приложение уже открыто в отдельном окне — предлагать установку незачем */
+function standalone(){
+  try { return matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: minimal-ui)").matches || navigator.standalone === true; }
+  catch(e) { return false; }
+}
+/* Safari на iPhone и iPad не показывает диалог установки — там остаётся подсказка вручную */
+function iosDevice(){
+  const ua = navigator.userAgent || "";
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
+}
+function renderInstallBtn(){
+  const el = $("#installBtn"); if (!el) return;
+  el.hidden = !(!standalone() && location.protocol.startsWith("http") && (S.installPrompt || iosDevice()));
+}
+function initInstall(){
+  const el = $("#installBtn"); if (!el) return;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); S.installPrompt = e; renderInstallBtn(); });
+  window.addEventListener("appinstalled", () => { S.installPrompt = null; swBar(""); renderInstallBtn(); });
+  el.onclick = async () => {
+    const p = S.installPrompt;
+    if (p) { S.installPrompt = null; renderInstallBtn(); p.prompt(); try { await p.userChoice; } catch(e) {} return; }
+    swBar(`<div class="banner">Установка на iPhone и iPad: кнопка «Поделиться» в Safari → «На экран «Домой»». После этого приложение открывается в отдельном окне и работает без сети. <button class="btn ghost" type="button" data-act="swClose">Понятно</button></div>`);
+  };
+  renderInstallBtn();
+}
 function initPWA(){
+  initInstall();
   /* в песочнице артефакта обращение к serviceWorker может само по себе бросить исключение */
   try {
     if (!("serviceWorker" in navigator) || !location.protocol.startsWith("http")) return;
@@ -2408,8 +2445,23 @@ function initPWA(){
         w.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) offer(); });
       });
       S.swReg = reg;
+      /* открытая сутками вкладка иначе не узнает о новой версии: проверяем при возврате к ней, не чаще раза в полчаса */
+      let checked = Date.now();
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "visible" || Date.now() - checked < 18e5 || navigator.onLine === false) return;
+        checked = Date.now(); reg.update().catch(() => {});
+      });
     }).catch(() => {});
   } catch(e) {}
+}
+/* ярлыки установленного приложения открывают нужное окно сразу */
+function applyLaunchAction(){
+  let act = null;
+  try { act = new URL(location.href).searchParams.get("act"); } catch(e) { return; }
+  if (!act) return;
+  try { history.replaceState(null, "", location.pathname + location.hash); } catch(e) {}
+  if (act === "add") openPatientDialog(null);
+  else if (act === "norms") openNorms();
 }
 function renderNet(){
   const el = $("#netbar"); if (!el) return;
@@ -2443,6 +2495,7 @@ renderMain(); renderNet(); initPWA();
     db = a; S.downloads = b; S.sample = c;
   }
   start(db ? RemoteStore(db) : LocalStore(), !!db);
+  applyLaunchAction();
 })();
 </script>
 </body>

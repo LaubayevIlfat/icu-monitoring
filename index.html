@@ -263,13 +263,19 @@ dialog#dlgSbar{width:min(760px,94vw)}
   .app:not(.has-patient) main{display:none}
   .back{display:inline-block}
   main{padding:14px 12px 50px}
-  .top{padding:10px 12px;gap:8px}
+  .top{padding:10px 12px;gap:8px;flex-wrap:wrap;row-gap:6px}
+  .top .btn{padding:6px 10px}
   .brand span,.mode span{display:none}
   .tabs{overflow-x:auto}
   .phead .acts{margin-left:0}
   .row{grid-template-columns:1fr auto;grid-template-areas:"ind val" "spark delta";row-gap:4px}
   .row .ind{grid-area:ind}.row .val{grid-area:val}.row .spark{grid-area:spark}.row .delta{grid-area:delta}.row .when{display:none}
   .seg button{padding:6px 9px}
+}
+/* телефоны: название — отдельной строкой, индикатор режима и кнопки — ниже; шапка не шире экрана */
+@media (max-width: 560px){
+  .brand{flex-basis:100%;margin-right:0}
+  .mode{margin-right:auto}
 }
 @media print{.top,aside,.tabs,.toolbar,.acts,.banner,.aibar .btn{display:none!important}.app{display:block}body{background:#fff}}
 </style>

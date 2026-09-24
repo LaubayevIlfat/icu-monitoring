@@ -10,7 +10,7 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const from = html.indexOf('"use strict";');
 const to = html.indexOf("/* ================== состояние и хранилище");
 assert.ok(from > 0 && to > from, "не найден блок расчётов в index.html");
-const E = new Function(html.slice(from, to) + "\nreturn {num, creat, crcl, doseOf, sofa, qsofa, mascc, shock, recommend, planSteps};")();
+const E = new Function(html.slice(from, to) + "\nreturn {num, creat, gfr, doseOf, sofa, qsofa, mascc, shock, recommend, planSteps};")();
 
 // Пустой эпизод в том виде, в каком его создаёт newEpisode()
 const EMPTY = {age:"", sex:"", weight:"", height:"", scr:"", anc:"", ancFalling:false, expDuration:"short", prophylaxis:"none", priorAbx:"none",
@@ -127,13 +127,31 @@ test("выбор стартовой схемы: 15 сценариев разде
   });
 });
 
-test("дозы по клиренсу и ЗПТ", () => {
-  assert.match(E.recommend(pt({age:"75", scr:"3.0", weight:"70"})).rx[0].dose, /^1 г в\/в каждые 12 ч/);
+test("СКФ по CKD-EPI 2021", () => {
+  // мужчина 55 лет, 0,9 мг/дл: Scr/κ = 1 → 142 × 0,9938^55
+  const g = E.gfr(pt({}));
+  assert.equal(Math.round(g.idx), 101);
+  assert.equal(g.bsa.toFixed(2), "1.93"); // Мостеллер: √(178 × 75 / 3600)
+  assert.equal(Math.round(g.v), 112);    // для доз: 101 × 1,93 / 1,73
+  // женщина 70 лет, 1,1 мг/дл: κ 0,7, α −0,241, коэффициент 1,012
+  assert.equal(Math.round(E.gfr(pt({age:"70", sex:"f", scr:"1.1"})).idx), 54);
+  // без роста — индексированное значение, с пометкой
+  const noH = E.gfr(pt({height:""}));
+  assert.equal(noH.v, noH.idx);
+  assert.match(noH.note, /индексированная/);
+  // масса не нужна для самой СКФ
+  assert.ok(E.gfr(pt({weight:""})));
+  assert.equal(E.gfr(pt({sex:""})), null);
+  assert.equal(E.gfr(pt({scr:"", crea_umol:""})), null);
+});
+
+test("дозы по СКФ и ЗПТ", () => {
+  assert.match(E.recommend(pt({age:"75", scr:"3.0", crea_umol:"265", weight:"70"})).rx[0].dose, /^1 г в\/в каждые 12 ч/);
   assert.match(E.recommend(pt({rrt:"hd"})).rx[0].dose, /после сеанса/);
-  const c = E.crcl(pt({weight:"140", height:"170"}));
-  assert.match(c.note, /скорректированной массе/);
-  assert.equal(Math.round(c.v), 125);
-  assert.equal(E.crcl(pt({scr:"", crea_umol:""})), null);
+  assert.match(E.doseOf("cefepime", pt({})).basis, /СКФ 112 мл\/мин \(CKD-EPI\)/);
+  assert.match(E.doseOf("cefepime", pt({scr:"", crea_umol:""})).basis, /не рассчитана/);
+  // риск: СКФ < 30 мл/мин/1,73 м²
+  assert.match(E.recommend(pt({age:"75", scr:"3.0", crea_umol:"265"})).risk.d, /СКФ < 30/);
 });
 
 test("сценарий 1 из раздела 11.1: шок, ЦВК и ЖКТ, ESBL", () => {
@@ -145,7 +163,7 @@ test("сценарий 1 из раздела 11.1: шок, ЦВК и ЖКТ, ESB
   assert.equal(r.qsofa.score, 3);
   assert.equal(r.shock.septicShock, true);
   assert.deepEqual(names(r), ["Меропенем", "Амикацин", "Ванкомицин", "Каспофунгин"]); // метронидазол к карбапенему не нужен
-  assert.match(r.addons[0].dose, /каждые 36 ч/);
+  assert.match(r.addons[0].dose, /каждые 24 ч/); // СКФ для доз 66 мл/мин (по Кокрофту–Голту было 57 → каждые 36 ч)
   // без диуреза почечный компонент считается по креатинину, а не как анурия
   assert.equal(E.recommend({...p, diur24:""}).sofa.parts.renal.p, 1);
 });
@@ -184,9 +202,9 @@ test("перианальный очаг даёт охват анаэробов (
 
 test("креатинин из любого из двух полей (Д7)", () => {
   const onlyUmol = pt({scr:"", crea_umol:"80"});
-  const c = E.crcl(onlyUmol);
-  assert.ok(c, "клиренс должен считаться по мкмоль/л");
-  assert.equal(Math.round(c.v), Math.round(E.crcl(pt({scr:String(80 / 88.4), crea_umol:""})).v));
+  const c = E.gfr(onlyUmol);
+  assert.ok(c, "СКФ должна считаться по мкмоль/л");
+  assert.equal(Math.round(c.v), Math.round(E.gfr(pt({scr:String(80 / 88.4), crea_umol:""})).v));
   assert.doesNotMatch(E.doseOf("cefepime", onlyUmol).basis, /не рассчитан/);
   const onlyMg = pt({scr:"3.0", crea_umol:""});
   assert.equal(E.sofa(onlyMg).parts.renal.p, 2); // 265 мкмоль/л

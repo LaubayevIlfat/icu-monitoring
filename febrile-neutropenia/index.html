@@ -1,0 +1,1254 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Фебрильная нейтропения — поддержка решений</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Spectral:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Тема «Клинический протокол»: тёплая бумага, серифные заголовки, бирюзовый акцент ===== */
+:root{
+  --paper:#F6F4EF; --sheet:#FFFFFF; --ink:#1B2430; --ink-2:#55606E; --ink-3:#8A94A1;
+  --line:#E3DED4; --line-2:#F0EDE6; --field:#FBFAF7;
+  --teal:#0F766E; --teal-soft:#DDF1EE; --plum:#6D28D9; --plum-soft:#EEE7FE;
+  --green:#15803D; --green-soft:#E4F6E9; --amber:#B45309; --amber-soft:#FCF0DB; --rose:#BE123C; --rose-soft:#FCE7EC;
+  --shadow:0 1px 2px rgba(27,36,48,.05), 0 8px 24px -16px rgba(27,36,48,.25);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#15181C; --sheet:#1D2126; --ink:#ECEAE4; --ink-2:#AEB6BF; --ink-3:#7C8794;
+  --line:#2E343C; --line-2:#252A31; --field:#191D22;
+  --teal:#5EEAD4; --teal-soft:#123632; --plum:#C4B5FD; --plum-soft:#2A2145;
+  --green:#6EE7A0; --green-soft:#12301F; --amber:#FBBF24; --amber-soft:#332508; --rose:#FDA4AF; --rose-soft:#36141D;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:16px/1.6 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3,h4,.rxn,.tv,.big{font-family:"Spectral","Georgia",serif;font-weight:600;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.muted{color:var(--ink-2)}.faint{color:var(--ink-3)}
+
+/* шапка */
+.top{background:var(--sheet);border-bottom:1px solid var(--line);padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top svg{color:var(--teal)}
+.top b{font-family:Spectral,Georgia,serif;font-size:22px;font-weight:600;color:var(--ink)}
+.top span.sub{color:var(--ink-3);font-size:14px;border-left:1px solid var(--line);padding-left:14px}
+.top .grow{flex:1}
+.mode{font-size:13.5px;color:var(--ink-2);display:flex;align-items:center;gap:7px;background:var(--field);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3)}.dot.live{background:var(--green)}.dot.local{background:var(--amber)}
+.wrap{max-width:1140px;margin:0 auto;padding:22px 18px 60px}
+
+/* шаги-вкладки */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;counter-reset:step}
+.tab{counter-increment:step;border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:8px 16px 8px 12px;cursor:pointer;color:var(--ink-2);display:flex;align-items:center;gap:9px}
+.tab::before{content:counter(step);display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--line-2);color:var(--ink-2);font-size:12.5px;font-weight:700}
+.tab:hover{border-color:var(--teal);color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+.tab[aria-selected="true"]::before{background:rgba(255,255,255,.22);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tab[aria-selected="true"]{color:#0B1412}
+  :root:not([data-theme="light"]) .tab[aria-selected="true"]::before{background:rgba(0,0,0,.18);color:#0B1412}}
+
+/* карточки и поля */
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 4px;font-size:19px}
+.card h3+.grid,.card h3+.cols,.card h3+.scroll{margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink-2);letter-spacing:.01em}
+label.f input,label.f select,label.f textarea{padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--field);font-size:15.5px;width:100%}
+label.f input:focus,label.f select:focus,label.f textarea:focus{background:var(--sheet)}
+label.f textarea{min-height:80px;resize:vertical}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:15px;cursor:pointer;border-bottom:1px solid var(--line-2)}
+.chk:hover{color:var(--teal)}
+.chk input{margin-top:4px;width:18px;height:18px;flex:none;accent-color:var(--teal)}
+.cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0 24px}
+.btn{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:9px 18px;cursor:pointer;white-space:nowrap;font-weight:500}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.07);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#0B1412}}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.danger{color:var(--rose)}.btn.danger:hover{border-color:var(--rose);color:var(--rose)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+
+/* показатели */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;margin-bottom:18px;background:none;padding:0}
+.tile{background:var(--sheet);border:1px solid var(--line);border-top:4px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+.tile .tl{font-size:12.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.tile .tv{font-size:30px;line-height:1.2;color:var(--ink)}
+.tile .ts{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.tile.ok{border-top-color:var(--green)}.tile.ok .tv{color:var(--green)}
+.tile.warn{border-top-color:var(--amber)}.tile.warn .tv{color:var(--amber)}
+.tile.crit{border-top-color:var(--rose)}.tile.crit .tv{color:var(--rose)}
+
+/* сигналы */
+.alert{border:1px solid var(--line);border-left:4px solid var(--teal);background:var(--sheet);border-radius:0 14px 14px 0;padding:14px 18px;margin-bottom:10px;box-shadow:var(--shadow)}
+.alert.crit{border-left-color:var(--rose);background:var(--rose-soft)}
+.alert.warn{border-left-color:var(--amber);background:var(--amber-soft)}
+.alert.ok{border-left-color:var(--green);background:var(--green-soft)}
+.alert b{font-family:Spectral,Georgia,serif;font-size:17px;font-weight:600}
+.alert p{margin:6px 0 0;color:var(--ink-2);font-size:15px;max-width:86ch}
+.lvl{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:999px;padding:2px 10px;background:var(--teal);color:#fff;margin-right:10px}
+.alert.crit .lvl{background:var(--rose)}.alert.warn .lvl{background:var(--amber)}.alert.ok .lvl{background:var(--green)}
+
+/* назначения */
+.rx{border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:12px;background:var(--sheet);box-shadow:var(--shadow);border-left:4px solid var(--plum)}
+.rx .rxh{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline}
+.rx .rxn{font-size:19px}
+.rx .dose{background:var(--teal-soft);color:var(--teal);border-radius:8px;padding:3px 11px;font-weight:600;font-size:15px}
+.rx .why{font-size:14.5px;color:var(--ink-2);margin-top:8px;max-width:86ch}
+.rx .alt{font-size:13.5px;color:var(--ink-3);margin-top:6px}
+
+/* таблицы */
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-weight:600;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);background:var(--line-2);padding:9px 11px;border-bottom:1px solid var(--line)}
+td{padding:9px 11px;border-bottom:1px solid var(--line-2);vertical-align:top}
+tbody tr:hover{background:var(--field)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+.pill{display:inline-block;font-size:12.5px;border-radius:999px;padding:2px 10px;background:var(--line-2);color:var(--ink-2);margin:2px 4px 2px 0}
+.sec{font-size:22px;margin:30px 0 14px;font-weight:600;display:flex;align-items:center;gap:12px}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.snote{font-size:14px;color:var(--ink-2)}
+.disc{font-size:13px;color:var(--ink-3);margin-top:14px;max-width:92ch}
+
+/* план по этапам */
+.plan{position:relative;margin:0 0 6px;padding-left:26px}
+.plan::before{content:"";position:absolute;left:8px;top:6px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--teal),var(--plum))}
+.step{position:relative;background:var(--sheet);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.step::before{content:"";position:absolute;left:-23px;top:20px;width:12px;height:12px;border-radius:50%;background:var(--teal);border:3px solid var(--paper)}
+.step.crit::before{background:var(--rose)}
+.step.later::before{background:var(--plum)}
+.step .when{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);background:var(--teal-soft);border-radius:999px;padding:2px 10px;margin-bottom:6px}
+.step.crit .when{color:var(--rose);background:var(--rose-soft)}
+.step.later .when{color:var(--plum);background:var(--plum-soft)}
+.step h4{margin:2px 0 8px;font-size:18px}
+.step ul{margin:6px 0;padding-left:20px}
+.step li{margin:4px 0}
+.branch{display:grid;grid-template-columns:minmax(180px,1fr) 2fr;gap:6px 16px;padding:9px 0;border-top:1px solid var(--line-2);font-size:14.5px}
+.branch .cond{font-weight:600}
+.branch .then{color:var(--ink-2)}
+@media (max-width:640px){.branch{grid-template-columns:1fr;gap:2px}}
+/* ИИ */
+.ai{border:1px solid var(--line);border-radius:18px;padding:18px 20px;background:var(--plum-soft);box-shadow:var(--shadow)}
+.aitext{max-width:86ch;font-size:15.5px}
+.aitext h4{font-size:17px;margin:16px 0 4px}
+.aitext p{margin:8px 0}.aitext ul,.aitext ol{margin:8px 0;padding-left:24px}
+.thinking{color:var(--ink-3);font-style:italic}
+
+/* загрузка снимков */
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px dashed var(--line);border-radius:18px;padding:28px;text-align:center;cursor:pointer;background:var(--field)}
+.drop:hover,.drop.over{border-color:var(--teal);background:var(--teal-soft)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.thumbs img{max-height:130px;border-radius:12px;border:1px solid var(--line)}
+
+/* аналитика */
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:minmax(130px,1fr) 3fr auto;gap:12px;align-items:center;font-size:14.5px}
+.bar i{display:block;height:14px;border-radius:999px;background:linear-gradient(90deg,var(--teal),var(--plum))}
+.epi{width:100%;text-align:left;border:1px solid var(--line);background:var(--sheet);border-radius:14px;padding:12px 16px;margin-bottom:8px;cursor:pointer;box-shadow:var(--shadow)}
+.epi:hover{border-color:var(--teal)}
+.epi[aria-current="true"]{border-color:var(--teal);background:var(--teal-soft)}
+.msg{font-size:14.5px}.msg.err{color:var(--rose)}
+@media (max-width:700px){.wrap{padding:14px 12px 40px}.top{padding:12px 14px}.top span.sub{display:none}.card{padding:16px}.sec{font-size:19px}}
+@media print{.top,.tabs,.row.noprint,.ai .row{display:none!important}body{background:#fff}.card,.rx,.alert,.tile{box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <svg width="52" height="22" viewBox="0 0 64 24" aria-hidden="true"><polyline points="0,14 13,14 17,14 20,5 24,21 27,9 30,14 40,14 44,14 46,11 49,14 64,14" fill="none" stroke="#34D399" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>
+  <b>Фебрильная нейтропения</b><span class="sub">поддержка решений для гематолога</span>
+  <span class="grow"></span>
+  <div class="mode" id="mode"><i class="dot"></i><span>подключение…</span></div>
+</header>
+<div class="wrap">
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="view"></div>
+  <p class="disc">Инструмент поддержки решений. Рекомендации носят справочный характер, не заменяют клиническую оценку, локальный протокол и данные локальной чувствительности. Дозы обязательно сверяйте с инструкцией к препарату и формуляром организации. Источники доз и мониторинга: руководства Stanford Health Care (Antimicrobial Dosing Reference Guide, 2024; Vancomycin Dosing Guide, 2023; Aminoglycoside Dosing Guideline; Antifungal TDM, 2024), ECIL-4, IDSA/ASCO/NCCN, Surviving Sepsis Campaign.</p>
+</div>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+/* пустое поле — «нет данных», а не ноль: иначе незаполненные ШКГ, диурез и АД дают баллы SOFA и признаки шока */
+const num = v => { const s = String(v ?? "").trim().replace(",", "."); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : null; };
+const fN = (v, d) => v == null ? "—" : Number(v).toLocaleString("ru-RU", {maximumFractionDigits: d ?? 1});
+const pad2 = n => String(n).padStart(2, "0");
+const nowLocal = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const fDT = s => { if (!s) return "—"; const d = new Date(s); return `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} };
+
+/* ================== справочники ================== */
+const FOCI = [
+  ["resp", "Дыхательные пути: кашель, одышка, хрипы, гипоксемия"],
+  ["oral", "Мукозит полости рта, некротическая ангина"],
+  ["gi", "Диарея, боль в животе, нейтропенический энтероколит (тифлит)"],
+  ["perianal", "Перианальная боль, инфильтрат, свищ"],
+  ["cvc", "ЦВК: боль/гиперемия по ходу туннеля, отделяемое, озноб на введении"],
+  ["skin", "Кожа и мягкие ткани: целлюлит, эктима, узлы"],
+  ["uti", "Мочевые пути: дизурия, боль в пояснице"],
+  ["cns", "ЦНС: головная боль, менингеальные знаки, спутанность"],
+  ["sinus", "Придаточные пазухи и орбита: боль, некроз слизистой, отёк лица"],
+  ["hepsplen", "Гепатолиенальные очаги, боль в правом подреберье"]
+];
+const CT = [
+  ["halo", "Узел(ы) > 1 см с симптомом ореола (halo)", "Высокая вероятность инвазивного плесневого поражения (аспергиллёз). Галактоманнан, БАЛ, ранняя антимикотическая терапия."],
+  ["crescent", "Симптом воздушного серпа, полость распада", "Поздняя стадия инвазивного микоза, чаще при восстановлении нейтрофилов; оценить риск лёгочного кровотечения."],
+  ["revhalo", "Симптом обратного ореола", "Характерен для мукормикоза; требует липосомального амфотерицина B и оценки хирургической санации."],
+  ["consol", "Очаговая или долевая консолидация", "Бактериальная пневмония; направленная терапия по посеву мокроты/БАЛ."],
+  ["ggo", "Диффузное «матовое стекло»", "Пневмоцистная, вирусная пневмония, лекарственное поражение, отёк лёгких."],
+  ["cavity", "Полости, множественные узлы с распадом", "Инвазивный микоз, нокардиоз, септические эмболы (S. aureus)."],
+  ["effusion", "Плевральный выпот", "Оценить показания к плевральной пункции с посевом."],
+  ["typhl", "Утолщение стенки слепой/восходящей кишки > 4 мм", "Нейтропенический энтероколит: покой кишечника, охват анаэробов и грамотрицательных, консультация хирурга."],
+  ["pneumat", "Пневматоз кишечной стенки, свободный газ", "Угроза перфорации: экстренная консультация хирурга."],
+  ["liverles", "Множественные мелкие очаги в печени и селезёнке", "Хронический диссеминированный кандидоз; чаще выявляется при восстановлении нейтрофилов."],
+  ["sinusd", "Синусит с деструкцией кости, некроз, распространение в орбиту", "Подозрение на мукормикоз или инвазивный аспергиллёз: срочная ЛОР-ревизия с биопсией."],
+  ["thromb", "Тромбоз в зоне ЦВК, септические эмболы", "Обсудить удаление катетера и антикоагуляцию."]
+];
+const ORGS = [
+  {id:"ecoli", n:"E. coli / Klebsiella spp.", gram:"гр−"},
+  {id:"pseudo", n:"P. aeruginosa", gram:"гр−"},
+  {id:"acineto", n:"A. baumannii", gram:"гр−"},
+  {id:"steno", n:"S. maltophilia", gram:"гр−"},
+  {id:"enterobact", n:"Enterobacter / Serratia / Citrobacter (AmpC)", gram:"гр−"},
+  {id:"mrsa", n:"S. aureus", gram:"гр+"},
+  {id:"cons", n:"Коагулазонегативный стафилококк (S. epidermidis)", gram:"гр+"},
+  {id:"entero", n:"Enterococcus spp.", gram:"гр+"},
+  {id:"strep", n:"Streptococcus viridans", gram:"гр+"},
+  {id:"candida", n:"Candida spp.", gram:"грибы"},
+  {id:"asperg", n:"Aspergillus spp.", gram:"грибы"},
+  {id:"mucor", n:"Мукормицеты", gram:"грибы"},
+  {id:"cdiff", n:"C. difficile", gram:"анаэроб"}
+];
+const PHEN = [
+  {id:"esbl", n:"БЛРС (ESBL)"}, {id:"cre", n:"Карбапенеморезистентность (CRE/CPE)"},
+  {id:"mbl", n:"Металло-β-лактамаза (NDM/VIM/IMP)"}, {id:"ampc", n:"AmpC-гиперпродукция"},
+  {id:"dtr", n:"P. aeruginosa с трудноизлечимой резистентностью (DTR)"},
+  {id:"mrsa", n:"MRSA / MRSE (метициллинорезистентность)"}, {id:"vre", n:"VRE (ванкомицинорезистентный энтерококк)"},
+  {id:"crab", n:"Карбапенеморезистентный A. baumannii"}, {id:"sens", n:"Чувствительный штамм (без маркеров)"}
+];
+/* Дозы: пороги по функции почек (мл/мин); применяются к СКФ по CKD-EPI без индексации на ППТ (см. gfr). Составлено по руководствам Stanford Health Care 2023–2024,
+   инструкциям производителей и профильным рекомендациям; сверять с локальным формуляром. */
+const DRUGS = {
+  piptazo:{n:"Пиперациллин/тазобактам", grp:"β-лактам", bands:[[40,"4,5 г в/в каждые 6 ч (30 мин) или 4,5 г каждые 8 ч в виде 4-часовой инфузии"],[20,"3,375 г в/в каждые 6 ч или 3,375 г каждые 8 ч в виде 4-часовой инфузии"],[0,"2,25 г в/в каждые 6 ч"]], hd:"2,25 г каждые 12 ч; при тяжёлой инфекции 3,375 г каждые 12 ч (4-часовая инфузия)", crrt:"3,375–4,5 г каждые 8 ч (4-часовая инфузия)"},
+  cefepime:{n:"Цефепим", grp:"β-лактам", bands:[[60,"2 г в/в каждые 8 ч (при фебрильной нейтропении и синегнойной инфекции — стандарт)"],[30,"2 г в/в каждые 12 ч"],[11,"1 г в/в каждые 12 ч"],[0,"1 г в/в каждые 24 ч"]], hd:"0,5–1 г каждые 24 ч, в дни диализа — после сеанса", crrt:"нагрузка 2 г, далее 1 г каждые 8 ч"},
+  meropenem:{n:"Меропенем", grp:"карбапенем", bands:[[50,"1 г в/в каждые 8 ч (3-часовая инфузия); при поражении ЦНС 2 г каждые 8 ч"],[26,"1 г в/в каждые 12 ч"],[10,"0,5 г в/в каждые 12 ч"],[0,"0,5 г в/в каждые 24 ч"]], hd:"500 мг каждые 24 ч после диализа (ЦНС — 1 г)", crrt:"1 г каждые 8 ч (ЦНС — 2 г каждые 12 ч)"},
+  imipenem:{n:"Имипенем/циластатин", grp:"карбапенем", bands:[[60,"500 мг в/в каждые 6 ч или 1 г каждые 8 ч"],[30,"500 мг в/в каждые 8 ч"],[15,"500 мг в/в каждые 12 ч"],[0,"не рекомендуется без диализа"]], hd:"250–500 мг каждые 12 ч", crrt:"нагрузка 1 г, далее 500 мг каждые 6 ч"},
+  ceftazidime:{n:"Цефтазидим", grp:"β-лактам", bands:[[50,"2 г в/в каждые 8 ч"],[30,"1–2 г в/в каждые 12 ч"],[16,"1–2 г в/в каждые 24 ч"],[6,"0,5–1 г в/в каждые 24 ч"],[0,"0,5 г в/в каждые 24 ч"]], hd:"0,5–1 г каждые 24 ч после диализа", crrt:"нагрузка 2 г, далее 1 г каждые 8 ч"},
+  czataz:{n:"Цефтазидим/авибактам", grp:"новый β-лактам", bands:[[50,"2,5 г в/в каждые 8 ч (2-часовая инфузия)"],[31,"1,25 г в/в каждые 8 ч"],[16,"0,94 г в/в каждые 12 ч"],[6,"0,94 г в/в каждые 24 ч"],[0,"0,94 г в/в каждые 48 ч"]], hd:"0,94 г каждые 24–48 ч, в дни диализа после сеанса", crrt:"1,25 г каждые 8 ч; 2,5 г каждые 8 ч при МПК > 4 мг/л"},
+  ceftol:{n:"Цефтолозан/тазобактам", grp:"новый β-лактам", bands:[[50,"3 г в/в каждые 8 ч (пневмония, синегнойная инфекция)"],[30,"1,5 г в/в каждые 8 ч"],[15,"750 мг в/в каждые 8 ч"],[0,"нагрузка 2,25 г, далее 450 мг каждые 8 ч"]], hd:"нагрузка 2,25 г, далее 450 мг каждые 8 ч", crrt:"3 г каждые 8 ч"},
+  cefiderocol:{n:"Цефидерокол", grp:"новый β-лактам", bands:[[120,"2 г в/в каждые 6 ч (3-часовая инфузия)"],[60,"2 г в/в каждые 8 ч"],[30,"1,5 г в/в каждые 8 ч"],[15,"1 г в/в каждые 8 ч"],[0,"750 мг в/в каждые 12 ч"]], hd:"750 мг каждые 12 ч, в дни диализа после сеанса", crrt:"1,5–2 г каждые 8–12 ч по скорости эффлюента"},
+  aztreonam:{n:"Азтреонам", grp:"монобактам", bands:[[30,"2 г в/в каждые 6–8 ч"],[10,"1 г в/в каждые 8 ч"],[0,"500 мг в/в каждые 8 ч (тяжёлая инфекция — 1 г каждые 12 ч)"]], hd:"1 г каждые 24 ч (тяжёлая — 1 г каждые 12 ч)", crrt:"нагрузка 2 г, далее 1 г каждые 8 ч"},
+  vanco:{n:"Ванкомицин", grp:"анти-MRSA", bands:[[0,"нагрузка 20–25 мг/кг фактической массы (макс. 2–3 г), далее по расчёту на целевую AUC24 400–600 мг·ч/л"]], hd:"нагрузка 20–25 мг/кг, далее по преддиализному уровню (цель 15–20 мг/л)", crrt:"нагрузка 20–25 мг/кг, далее 10–15 мг/кг каждые 24 ч", tdm:"AUC24 400–600 мг·ч/л; уровень в первые 24–48 ч; при AUC > 650 или остаточной концентрации > 15 — рост риска нефротоксичности"},
+  linezolid:{n:"Линезолид", grp:"анти-MRSA/VRE", bands:[[0,"600 мг в/в или внутрь каждые 12 ч (коррекция по функции почек не требуется)"]], hd:"600 мг каждые 12 ч", crrt:"600 мг каждые 12 ч", tdm:"контроль тромбоцитов и гемоглобина при терапии > 7 суток; осторожно при миелосупрессии"},
+  dapto:{n:"Даптомицин", grp:"анти-MRSA/VRE", bands:[[30,"8–10 мг/кг в/в каждые 24 ч (бактериемия, эндоваскулярная инфекция)"],[0,"8–10 мг/кг в/в каждые 48 ч"]], hd:"8 мг/кг после диализа", crrt:"6–8 мг/кг каждые 24 ч", tdm:"не применять при пневмонии (инактивируется сурфактантом); контроль КФК исходно и далее не реже 1 раза в неделю"},
+  amikacin:{n:"Амикацин", grp:"аминогликозид", bands:[[60,"15 мг/кг в/в каждые 24 ч (расширенный интервал)"],[40,"15 мг/кг в/в каждые 36 ч"],[30,"15 мг/кг в/в каждые 48 ч"],[0,"расширенный интервал не рекомендуется: традиционный режим или дозирование по уровням"]], hd:"дозирование по уровням", crrt:"нагрузка 10 мг/кг, далее 7,5 мг/кг каждые 24–48 ч по уровням", tdm:"при расширенном интервале — уровень через 8–12 ч после дозы по номограмме Хартфорда; остаточная концентрация < 4 мкг/мл; при терапии > 2 недель — аудиометрия"},
+  gent:{n:"Гентамицин / тобрамицин", grp:"аминогликозид", bands:[[60,"7 мг/кг в/в каждые 24 ч (номограмма Хартфорда) или 5 мг/кг каждые 24 ч"],[40,"7 мг/кг в/в каждые 36 ч"],[30,"7 мг/кг в/в каждые 48 ч"],[0,"расширенный интервал не рекомендуется: 1,7 мг/кг каждые 8 ч по уровням"]], hd:"не рекомендуется расширенный интервал; по уровням", crrt:"нагрузка 3 мг/кг, далее 1,5–2,5 мг/кг каждые 24–48 ч", tdm:"остаточная концентрация < 1 мкг/мл; уровень через 8–12 ч после дозы"},
+  polymyxin:{n:"Полимиксин B", grp:"полимиксин", bands:[[0,"нагрузка 20 000–25 000 ЕД/кг, далее 12 500–15 000 ЕД/кг в/в каждые 12 ч"]], hd:"без изменений", crrt:"без изменений", tdm:"выраженная нефротоксичность: ежедневный контроль креатинина"},
+  metro:{n:"Метронидазол", grp:"анаэробы", bands:[[0,"500 мг в/в или внутрь каждые 6–8 ч"]], hd:"500 мг каждые 8 ч", crrt:"500 мг каждые 6–8 ч"},
+  vancoPO:{n:"Ванкомицин внутрь", grp:"C. difficile", bands:[[0,"125 мг внутрь каждые 6 ч; при осложнённом течении (илеус, токсический мегаколон) 500 мг каждые 6 ч"]], hd:"без изменений", crrt:"без изменений"},
+  caspo:{n:"Каспофунгин", grp:"эхинокандин", bands:[[0,"нагрузка 70 мг в/в, далее 50 мг каждые 24 ч (при массе > 80 кг — 70 мг каждые 24 ч); при эндоваскулярной инфекции 150 мг каждые 24 ч"]], hd:"без изменений", crrt:"без изменений"},
+  lamb:{n:"Липосомальный амфотерицин B", grp:"полиен", bands:[[0,"3–5 мг/кг в/в каждые 24 ч; при мукормикозе 5–10 мг/кг каждые 24 ч"]], hd:"без изменений", crrt:"без изменений", tdm:"контроль калия, магния и креатинина не реже чем через день"},
+  vori:{n:"Вориконазол", grp:"азол", bands:[[50,"в/в: 6 мг/кг каждые 12 ч × 2 дозы, далее 4 мг/кг каждые 12 ч; внутрь: 400 мг каждые 12 ч × 2, далее 200 мг каждые 12 ч"],[0,"внутривенной формы по возможности избегать (накопление циклодекстрина) — предпочесть пероральную форму или изавуконазол"]], hd:"пероральная форма без изменений", crrt:"пероральная форма без изменений", tdm:"остаточная концентрация 1–5,5 мг/л, забор с 4-х суток; > 5,5 мг/л — зрительные и неврологические нарушения; нелинейная фармакокинетика"},
+  isavu:{n:"Изавуконазол", grp:"азол", bands:[[0,"372 мг в/в или внутрь каждые 8 ч × 6 доз, далее 372 мг каждые 24 ч"]], hd:"без изменений", crrt:"без изменений", tdm:"рутинный мониторинг не требуется; линейная фармакокинетика"},
+  posa:{n:"Позаконазол", grp:"азол", bands:[[0,"таблетки с замедленным высвобождением или в/в: 300 мг каждые 12 ч × 2 дозы, далее 300 мг каждые 24 ч"]], hd:"без изменений", crrt:"без изменений", tdm:"на 5–7-е сутки: профилактика ≥ 700 нг/мл, лечение ≥ 1000 нг/мл (в отдельных ситуациях ≥ 1250)"},
+  fluco:{n:"Флуконазол", grp:"азол", bands:[[50,"нагрузка 800 мг (12 мг/кг), далее 400–800 мг каждые 24 ч при тяжёлом кандидозе"],[0,"нагрузка 800 мг, далее 200–400 мг каждые 24 ч"]], hd:"нагрузка 800 мг, далее 400–800 мг после диализа", crrt:"нагрузка 800–1200 мг, далее 400–800 мг каждые 24 ч"},
+  acyclovir:{n:"Ацикловир", grp:"противовирусный", bands:[[50,"5 мг/кг в/в каждые 8 ч; при тяжёлых формах (ЦНС, диссеминация, опоясывающий лишай) 10 мг/кг каждые 8 ч"],[25,"5–10 мг/кг в/в каждые 12 ч"],[10,"5–10 мг/кг в/в каждые 24 ч"],[0,"2,5–5 мг/кг в/в каждые 24 ч"]], hd:"2,5–5 мг/кг каждые 24 ч после диализа", crrt:"5–10 мг/кг каждые 12 ч"},
+  tmpsmx:{n:"Ко-тримоксазол", grp:"пневмоцистоз", bands:[[30,"15–20 мг/кг/сут по триметоприму в 3 приёма"],[15,"50% дозы"],[0,"по возможности избегать; при необходимости 5–7,5 мг/кг триметоприма каждые 24 ч"]], hd:"5–7,5 мг/кг триметоприма каждые 24 ч после диализа", crrt:"5–10 мг/кг/сут в 2 приёма"},
+  cipro:{n:"Ципрофлоксацин", grp:"фторхинолон", bands:[[50,"400 мг в/в каждые 8 ч (тяжёлая и синегнойная инфекция) или 400 мг каждые 12 ч"],[30,"400 мг в/в каждые 8–12 ч"],[0,"400 мг в/в каждые 24 ч"]], hd:"200–400 мг каждые 24 ч после диализа", crrt:"400 мг каждые 12 ч"},
+  levo:{n:"Левофлоксацин", grp:"фторхинолон", bands:[[50,"750 мг в/в или внутрь каждые 24 ч"],[20,"750 мг каждые 48 ч"],[0,"750 мг однократно, далее 500 мг каждые 48 ч"]], hd:"как при СКФ < 20, в дни диализа после сеанса", crrt:"нагрузка 750 мг, далее 250–500 мг каждые 24 ч"}
+};
+const SEV = {crit:0, warn:1, info:2, ok:3};
+
+/* ================== расчёты ================== */
+/* Креатинин вводится в мг/дл или в мкмоль/л; достаточно одного поля, второе получается пересчётом (1 мг/дл = 88,4 мкмоль/л). */
+const UMOL_PER_MGDL = 88.4;
+function creat(p){
+  const mg = num(p.scr), um = num(p.crea_umol);
+  const mgdl = mg != null ? mg : um != null ? um / UMOL_PER_MGDL : null;
+  const umol = um != null ? um : mg != null ? mg * UMOL_PER_MGDL : null;
+  const mismatch = mg != null && um != null && mg > 0 && Math.abs(um / UMOL_PER_MGDL - mg) / mg > 0.1;
+  return {mgdl, umol, mismatch, src: mg != null && um != null ? "both" : mg != null ? "mgdl" : um != null ? "umol" : null};
+}
+/* СКФ по CKD-EPI 2021 (креатининовое уравнение без расовой поправки) — та же формула, что в приложении ОРИТ.
+   idx — мл/мин/1,73 м² (стадия ХБП, риск). v — для доз: без индексации, idx × ППТ / 1,73 (KDIGO 2024),
+   ППТ по Мостеллеру; без роста или массы берётся индексированное значение. */
+function gfr(p){
+  const age = num(p.age), scr = creat(p).mgdl;
+  if (age == null || scr == null || scr <= 0 || !p.sex) return null;
+  const f = p.sex === "f", k = f ? 0.7 : 0.9, a = f ? -0.241 : -0.302;
+  const idx = 142 * Math.pow(Math.min(scr / k, 1), a) * Math.pow(Math.max(scr / k, 1), -1.2) * Math.pow(0.9938, age) * (f ? 1.012 : 1);
+  const w = num(p.weight), h = num(p.height), bsa = w && h ? Math.sqrt(w * h / 3600) : null;
+  return {idx, bsa, v: bsa ? idx * bsa / 1.73 : idx,
+    note: bsa ? `CKD-EPI ${fN(idx,0)} мл/мин/1,73 м², для доз — без индексации по ППТ ${fN(bsa,2)} м²`
+      : `CKD-EPI ${fN(idx,0)} мл/мин/1,73 м², для доз — индексированная СКФ: нет роста или массы для ППТ`};
+}
+function doseOf(key, p){
+  const d = DRUGS[key]; if (!d) return {n:key, dose:"—"};
+  if (p.rrt === "hd") return {n:d.n, dose:d.hd || "по режиму диализа", tdm:d.tdm, basis:"гемодиализ"};
+  if (p.rrt === "crrt") return {n:d.n, dose:d.crrt || "по режиму ЗПТ", tdm:d.tdm, basis:"ПЗПТ"};
+  const c = gfr(p);
+  if (!c) return {n:d.n, dose:d.bands[0][1], tdm:d.tdm, basis:"СКФ не рассчитана: нужны возраст, пол и креатинин"};
+  const b = d.bands.find(x => c.v >= x[0]) || d.bands[d.bands.length - 1];
+  return {n:d.n, dose:b[1], tdm:d.tdm, basis:`СКФ ${fN(c.v,0)} мл/мин (CKD-EPI)`};
+}
+function sofa(p){
+  const parts = {}, miss = [];
+  const pf = (num(p.po2) != null && num(p.fio2)) ? num(p.po2) / (num(p.fio2) / 100) : null;
+  const vent = p.vent === "1" || p.vent === "2"; /* НИВЛ и высокопоточная O₂ тоже считаются поддержкой: без неё баллы 3–4 недоступны */
+  if (pf != null) parts.resp = {p: pf >= 400 ? 0 : pf >= 300 ? 1 : pf >= 200 ? 2 : !vent ? 2 : pf >= 100 ? 3 : 4, s:`PaO₂/FiO₂ ${fN(pf,0)}`};
+  else if (num(p.spo2) != null) { const s = num(p.spo2); parts.resp = {p: s >= 95 ? 0 : s >= 92 ? 1 : s >= 88 ? 2 : 3, s:`по SpO₂ ${s}% (ориентировочно)`}; miss.push("газы крови"); }
+  else miss.push("дыхание");
+  if (num(p.plt) != null) { const x = num(p.plt); parts.coag = {p: x >= 150 ? 0 : x >= 100 ? 1 : x >= 50 ? 2 : x >= 20 ? 3 : 4, s:`тромбоциты ${x}`}; } else miss.push("тромбоциты");
+  if (num(p.bil) != null) { const x = num(p.bil); parts.liver = {p: x < 20 ? 0 : x < 33 ? 1 : x < 102 ? 2 : x <= 204 ? 3 : 4, s:`билирубин ${x}`}; } else miss.push("билирубин");
+  const map = (num(p.sbp) != null && num(p.dbp) != null) ? (num(p.sbp) + 2 * num(p.dbp)) / 3 : null;
+  const na = num(p.norad) || 0, ad = num(p.adr) || 0, dop = num(p.dopa) || 0, dob = num(p.dobu) || 0;
+  if (map != null || na || ad || dop || dob) {
+    let x = map != null && map < 70 ? 1 : 0;
+    if ((dop > 0 && dop <= 5) || dob > 0) x = 2;
+    if (dop > 5 || (ad > 0 && ad <= 0.1) || (na > 0 && na <= 0.1)) x = 3;
+    if (dop > 15 || ad > 0.1 || na > 0.1) x = 4;
+    parts.cv = {p:x, s:[map != null && `ср. АД ${fN(map,0)}`, na && `норадреналин ${na}`, ad && `адреналин ${ad}`, dop && `дофамин ${dop}`, dob && `добутамин ${dob}`].filter(Boolean).join(", ")};
+  } else miss.push("гемодинамика");
+  if (num(p.gcs) != null) { const x = num(p.gcs); parts.cns = {p: x >= 15 ? 0 : x >= 13 ? 1 : x >= 10 ? 2 : x >= 6 ? 3 : 4, s:`ШКГ ${x}`}; } else miss.push("сознание");
+  if (creat(p).umol != null || num(p.diur24) != null) {
+    const x = creat(p).umol, d = num(p.diur24); let pr = 0, s = [];
+    if (x != null) { pr = x < 110 ? 0 : x <= 170 ? 1 : x <= 299 ? 2 : x <= 440 ? 3 : 4; s.push(`креатинин ${fN(x,0)}`); }
+    if (d != null && d < 500) { pr = Math.max(pr, d < 200 ? 4 : 3); s.push(`диурез ${d} мл/сут`); }
+    parts.renal = {p:pr, s:s.join(", ")};
+  } else miss.push("почки");
+  const total = Object.values(parts).reduce((a, x) => a + x.p, 0);
+  /* Тромбоцитопения после химиотерапии ожидаема и сама по себе не означает сепсис:
+     органную дисфункцию считаем по приросту к исходному SOFA, а без него — без коагуляционного компонента. */
+  const base = num(p.sofaBase), coag = parts.coag ? parts.coag.p : 0;
+  const dys = base != null ? Math.max(0, total - base) : total - coag;
+  const dysBasis = base != null ? `прирост к исходному SOFA ${base}` : coag ? "без коагуляционного компонента: исходный SOFA не указан, тромбоцитопения ожидаема после химиотерапии" : "исходный SOFA не указан и принят за 0";
+  return {total, parts, miss, base, dys, dysBasis};
+}
+function qsofa(p){
+  const map = (num(p.sbp) != null && num(p.dbp) != null) ? (num(p.sbp) + 2 * num(p.dbp)) / 3 : null;
+  const items = [num(p.rr) != null && num(p.rr) >= 22, num(p.sbp) != null && num(p.sbp) <= 100, num(p.gcs) != null && num(p.gcs) < 15];
+  return {score:items.filter(Boolean).length, map};
+}
+function mascc(p){
+  const it = [
+    ["burden", p.masccBurden === "none" ? 5 : (p.masccBurden === "mod" || p.masccBurden === "mild") ? 3 : 0, "Тяжесть симптомов"], /* "mild" — прежнее значение пункта «умеренные симптомы» */
+    ["hypo", p.sbp && num(p.sbp) < 90 ? 0 : 5, "Нет гипотензии (САД ≥ 90)"],
+    ["copd", p.copd ? 0 : 4, "Нет ХОБЛ"],
+    ["tumor", p.solidOrNoFungal ? 4 : 0, "Солидная опухоль или нет грибковой инфекции в анамнезе"],
+    ["dehydr", p.dehydration ? 0 : 3, "Нет обезвоживания, требующего инфузии"],
+    ["outpat", p.outpatient ? 3 : 0, "Амбулаторный статус на момент лихорадки"],
+    ["age", num(p.age) != null && num(p.age) < 60 ? 2 : 0, "Возраст < 60 лет"]
+  ];
+  const total = it.reduce((a, x) => a + x[1], 0);
+  return {total, items:it, low: total >= 21};
+}
+function shock(p){
+  const q = qsofa(p), vaso = (num(p.norad) || 0) > 0 || (num(p.adr) || 0) > 0 || (num(p.dopa) || 0) > 0;
+  const lac = num(p.lactate);
+  return {vaso, hypo: q.map != null && q.map < 65 || (num(p.sbp) != null && num(p.sbp) < 90), lactate:lac,
+    septicShock: vaso && lac != null && lac > 2, suspected: (q.map != null && q.map < 65) || (lac != null && lac >= 4) || vaso};
+}
+
+/* ================== движок рекомендаций ================== */
+function recommend(p){
+  const out = {flags:[], rx:[], addons:[], fungal:[], viral:[], source:[], deesc:[], monitor:[], duration:[], risk:null};
+  const anc = num(p.anc), t = num(p.tempMax), so = sofa(p), q = qsofa(p), sh = shock(p), ms = mascc(p), c = gfr(p);
+  const fn = (t != null && (t >= 38.3 || (t >= 38 && p.tempSustained))) && (anc != null && (anc < 0.5 || (anc < 1 && p.ancFalling)));
+  out.fn = fn; out.sofa = so; out.qsofa = q; out.shock = sh; out.mascc = ms; out.gfr = c;
+  const hi = p.colonization || {}, mdr = k => hi[k];
+  const prolonged = p.expDuration === "long";
+  const prior = p.priorAbx || "none";
+
+  if (!fn) out.flags.push({lvl:"warn", t:"Критерии фебрильной нейтропении формально не подтверждены",
+    d:"Критерии: однократно ≥ 38,3 °C или ≥ 38,0 °C в течение часа при нейтрофилах < 0,5 × 10⁹/л либо < 1,0 × 10⁹/л с ожидаемым снижением ниже 0,5 в ближайшие 48 ч. При клинической картине сепсиса терапию начинают независимо от формальных критериев."});
+  else out.flags.push({lvl:"crit", t:"Фебрильная нейтропения подтверждена — неотложное состояние",
+    d:"Антибактериальная терапия широкого спектра должна быть начата в течение 60 минут от момента регистрации лихорадки; посевы берут до введения, но не в ущерб срокам."});
+
+  if (sh.septicShock) out.flags.push({lvl:"crit", t:"Септический шок: вазопрессоры и лактат > 2 ммоль/л",
+    d:"Эскалационная стратегия с первой дозы: карбапенем + анти-MRSA препарат ± второй антисинегнойный препарат. Целевое среднее АД ≥ 65 мм рт. ст., контроль лактата каждые 2 ч, перевод в ОРИТ."});
+  else if (sh.suspected) out.flags.push({lvl:"crit", t:"Гемодинамическая нестабильность и/или гиперлактатемия",
+    d:"Рассматривать как сепсис высокого риска: расширенный охват с первой дозы, инфузионная нагрузка, мониторинг в условиях ОРИТ."});
+
+  const sofaParts = `Компоненты: ${Object.entries(so.parts).map(([k,v]) => `${({resp:"дыхание",coag:"коагуляция",liver:"печень",cv:"гемодинамика",cns:"ЦНС",renal:"почки"})[k]} ${v.p}`).join(", ")}.${so.miss.length ? " Нет данных: " + so.miss.join(", ") + "." : ""}`;
+  if (so.dys >= 2) out.flags.push({lvl: so.dys >= 6 ? "crit" : "warn", t:`Органная дисфункция: SOFA ${so.total}, в расчёт риска — ${so.dys}`,
+    d:`${sofaParts} Оценка ${so.dysBasis}. Прирост SOFA ≥ 2 от исходного при инфекции соответствует критериям сепсиса (Sepsis-3).`});
+  else if (so.total >= 2) out.flags.push({lvl:"info", t:`SOFA ${so.total} — в основном за счёт тромбоцитопении`,
+    d:`${sofaParts} Органная дисфункция не засчитана: оценка ${so.dysBasis}. Если тромбоцитопения не связана с химиотерапией, укажите исходный SOFA.`});
+  const cr = creat(p);
+  if (cr.mismatch) out.flags.push({lvl:"warn", t:"Значения креатинина в мг/дл и мкмоль/л не совпадают",
+    d:`${fN(num(p.scr), 2)} мг/дл соответствует ${fN(num(p.scr) * UMOL_PER_MGDL, 0)} мкмоль/л, а внесено ${fN(num(p.crea_umol), 0)} мкмоль/л. СКФ и дозы считаются по мг/дл, SOFA — по мкмоль/л. Проверьте и оставьте одно значение.`});
+  if (q.score >= 2) out.flags.push({lvl:"warn", t:`qSOFA ${q.score}/3`, d:"Высокий риск неблагоприятного исхода: оценить перевод в ОРИТ, лактат, посевы, раннюю эскалацию."});
+
+  const fo = p.foci || {}, im = p.ct || {}, riskWhy = [];
+  if (sh.suspected) riskWhy.push("нестабильная гемодинамика");
+  if (so.dys >= 2) riskWhy.push("органная дисфункция");
+  if (prolonged) riskWhy.push("ожидаемая длительная нейтропения");
+  if (p.comorbid) riskWhy.push("значимая сопутствующая патология");
+  if (fo.resp || im.consol) riskWhy.push("пневмония или респираторный очаг");
+  if (fo.cvc) riskWhy.push("инфекция ЦВК");
+  if (fo.cns) riskWhy.push("неврологическая симптоматика");
+  if (fo.gi || fo.perianal || im.typhl) riskWhy.push("абдоминальный или перианальный очаг");
+  if (p.rrt && p.rrt !== "none") riskWhy.push("заместительная почечная терапия");
+  else if (c && c.idx < 30) riskWhy.push("СКФ < 30 мл/мин/1,73 м²");
+  if (!ms.low) riskWhy.push("MASCC < 21");
+  out.risk = riskWhy.length
+    ? {cls:"high", t:"Высокий риск", d:`MASCC ${ms.total} балл(ов)${ms.low ? " (формально низкий риск)" : ""}; ${riskWhy.join("; ")}; стационарное лечение, внутривенная терапия.`}
+    : {cls:"low", t:"Низкий риск", d:`MASCC ${ms.total} балл(ов), нейтропения ожидается короткой, органной дисфункции нет. Возможна пероральная терапия (ципрофлоксацин + амоксициллин/клавуланат) и амбулаторное ведение при обеспеченном наблюдении, связи и возможности вернуться в стационар. Не применимо при профилактике фторхинолоном, мукозите III–IV степени, рвоте, ОМЛ/ТГСК в активной фазе.`};
+
+  /* выбор базового препарата */
+  let base = "cefepime", why = "стандартная монотерапия антисинегнойным β-лактамом при фебрильной нейтропении.";
+  if (p.foci?.gi || p.foci?.perianal || p.ct?.typhl) { base = "piptazo"; why = "очаг в брюшной полости, перианальный очаг или нейтропенический энтероколит: нужен охват анаэробов."; }
+  if (mdr("esbl") || prior === "carbapenem") { base = "meropenem"; why = "колонизация или перенесённая инфекция БЛРС-продуцентом (либо предшествующая терапия карбапенемом): карбапенем с первой дозы."; }
+  if (sh.suspected || sh.septicShock) { base = "meropenem"; why = "сепсис или септический шок: карбапенем с первой дозы как наиболее надёжный охват грамотрицательной флоры."; }
+  if (mdr("dtr")) { base = "ceftol"; why = "P. aeruginosa с трудноизлечимой резистентностью в анамнезе: цефтолозан/тазобактам или цефтазидим/авибактам по чувствительности."; }
+  if (mdr("cre") && !mdr("mbl")) { base = "czataz"; why = "карбапенеморезистентные энтеробактерии без металло-β-лактамазы: цефтазидим/авибактам."; }
+  if (mdr("mbl")) { base = "cefiderocol"; why = "металло-β-лактамаза: цефидерокол либо цефтазидим/авибактам в сочетании с азтреонамом; обязательна консультация инфекциониста и клинического фармаколога."; }
+  out.rx.push({...doseOf(base, p), why});
+  out.baseKey = base;
+
+  if (mdr("mbl")) out.rx.push({...doseOf("aztreonam", p), why:"при металло-β-лактамазе — азтреонам в комбинации с цефтазидим/авибактамом, если цефидерокол недоступен."});
+
+  /* второй антисинегнойный препарат */
+  if (sh.septicShock || (sh.suspected && (mdr("dtr") || mdr("crab") || mdr("cre")))) {
+    out.addons.push({...doseOf("amikacin", p), why:"септический шок или риск полирезистентной грамотрицательной флоры: второй препарат в первые 48–72 ч для увеличения вероятности попадания в спектр. Отменить при получении чувствительности."});
+  }
+  if (mdr("crab")) out.addons.push({...doseOf("polymyxin", p), why:"карбапенеморезистентный A. baumannii: полимиксин B в комбинации (обычно с сульбактамом или цефидероколом), обязательна консультация клинического фармаколога."});
+
+  /* анти-MRSA */
+  const gramPos = [];
+  if (sh.suspected || sh.septicShock) gramPos.push("нестабильная гемодинамика или шок");
+  if (p.foci?.cvc) gramPos.push("подозрение на катетер-ассоциированную инфекцию");
+  if (p.foci?.skin) gramPos.push("инфекция кожи и мягких тканей");
+  if (p.foci?.resp && p.ct?.consol) gramPos.push("пневмония");
+  if (mdr("mrsa")) gramPos.push("колонизация MRSA/MRSE");
+  if (p.foci?.oral && p.prophylaxis === "fq") gramPos.push("тяжёлый мукозит на фоне профилактики фторхинолоном (риск виридансного стрептококка)");
+  if (p.gramPosBlood) gramPos.push("грамположительные кокки в гемокультуре до идентификации");
+  if (gramPos.length) {
+    if (mdr("vre")) out.addons.push({...doseOf("linezolid", p), why:`показания к анти-MRSA/VRE терапии: ${gramPos.join("; ")}; колонизация VRE — линезолид или даптомицин.`});
+    else if (p.foci?.resp && p.ct?.consol) out.addons.push({...doseOf("linezolid", p), why:`показания: ${gramPos.join("; ")}. При пневмонии линезолид предпочтительнее даптомицина (инактивируется сурфактантом); альтернатива — ванкомицин.`});
+    else out.addons.push({...doseOf("vanco", p), why:`показания к добавлению анти-MRSA препарата: ${gramPos.join("; ")}. Если через 48–72 ч грамположительный возбудитель не выделен — отменить.`});
+  } else out.deesc.push("Рутинное добавление ванкомицина в стартовую схему не показано: нет нестабильности, катетерной инфекции, пневмонии, поражения кожи и колонизации MRSA.");
+
+  if ((p.foci?.gi || p.foci?.perianal) && base === "cefepime") out.addons.push({...doseOf("metro", p), why:"цефепим не покрывает анаэробы: при энтероколите, перианальном очаге и внутрибрюшной инфекции добавляется метронидазол (для пиперациллина/тазобактама и карбапенемов не требуется)."});
+  if (p.cdiff) out.addons.push({...doseOf("vancoPO", p), why:"клостридиальная инфекция: ванкомицин внутрь (альтернатива — фидаксомицин 200 мг каждые 12 ч); метронидазол внутривенно только как дополнение при тяжёлом течении."});
+
+  /* противогрибковая тактика */
+  const gmPos = p.gm === "pos" || p.bdg === "pos";
+  if (p.ct?.revhalo || p.ct?.sinusd) out.fungal.push({...doseOf("lamb", p), why:"признаки мукормикоза (симптом обратного ореола, деструктивный синусит): липосомальный амфотерицин B в высокой дозе, срочная биопсия и обсуждение хирургической санации."});
+  else if (p.ct?.halo || p.ct?.crescent || p.ct?.cavity || gmPos) out.fungal.push({...doseOf("vori", p), why:`признаки инвазивного плесневого поражения${gmPos ? " и/или положительный галактоманнан/бета-D-глюкан" : ""}: вориконазол или изавуконазол; при непереносимости азолов — липосомальный амфотерицин B. Обязательны КТ-контроль и попытка микробиологической верификации (БАЛ, биопсия).`});
+  else if (p.feverDays >= 4 && prolonged) out.fungal.push({...doseOf("caspo", p), why:"персистирующая лихорадка более 4 суток на фоне адекватной антибактериальной терапии при ожидаемой длительной нейтропении: эмпирическая антимикотическая терапия (эхинокандин или липосомальный амфотерицин B). Альтернатива — упреждающая стратегия по КТ и галактоманнану."});
+  if (p.candidemia) out.fungal.push({...doseOf("caspo", p), why:"кандидемия: эхинокандин первой линией, удаление ЦВК, офтальмологический осмотр, контрольные посевы до отрицательных, длительность 14 суток от первого отрицательного посева."});
+  if (p.ct?.liverles) out.fungal.push({...doseOf("caspo", p), why:"очаги в печени и селезёнке — хронический диссеминированный кандидоз: длительная терапия (эхинокандин с переходом на флуконазол), обсудить кортикостероиды при воспалительном синдроме восстановления."});
+
+  if (p.foci?.oral && p.hsv) out.viral.push({...doseOf("acyclovir", p), why:"герпетический мукозит: ацикловир; при тяжёлых формах — высокая доза."});
+  if (p.ct?.ggo) out.viral.push({...doseOf("tmpsmx", p), why:"диффузное «матовое стекло»: исключать пневмоцистоз (индуцированная мокрота или БАЛ, ПЦР) и респираторные вирусы; при высокой вероятности — ко-тримоксазол в лечебной дозе + кортикостероиды при гипоксемии."});
+
+  /* источник, посевы */
+  out.source.push("Две пары гемокультур: из периферической вены и из каждого просвета ЦВК (для оценки дифференциального времени позитивации), до первой дозы антибиотика.");
+  out.source.push("Посев из клинически подозрительных локусов: мокрота или БАЛ, моча, кал (при диарее — токсин C. difficile), отделяемое ран и перианальной области, ликвор при неврологической симптоматике.");
+  if (p.foci?.resp || p.feverDays >= 3) out.source.push("КТ органов грудной клетки высокого разрешения при респираторной симптоматике или лихорадке более 72 ч, независимо от рентгенограммы.");
+  out.source.push("Галактоманнан сыворотки (и БАЛ при бронхоскопии) дважды в неделю при высоком риске; бета-D-глюкан по доступности.");
+  if (p.foci?.cvc) out.source.push("При катетер-ассоциированной инфекции: удаление ЦВК обязательно при S. aureus, P. aeruginosa, Candida spp., туннельной инфекции, септическом шоке, сохраняющейся бактериемии более 72 ч.");
+
+  /* деэскалация и длительность */
+  out.deesc.push("Через 48–72 ч повторно оценить: лихорадку, гемодинамику, очаг, результаты посевов и КТ. Смена схемы «вслепую» только из-за сохраняющейся лихорадки без новых данных не показана.");
+  out.deesc.push("При выделенном возбудителе перейти на препарат узкого спектра по чувствительности (направленная терапия), сохранив антисинегнойный охват только при соответствующем возбудителе или тяжёлом состоянии.");
+  out.deesc.push("Анти-MRSA препарат отменить через 48–72 ч, если грамположительный возбудитель не подтверждён.");
+  out.deesc.push("Стратегия ECIL-4: у стабильных пациентов без документированной инфекции антибактериальную терапию можно прекратить после 72 ч лечения при отсутствии лихорадки ≥ 48 ч, независимо от числа нейтрофилов, при условии наблюдения в стационаре.");
+  out.duration.push("Бактериемия грамотрицательная: не менее 7 суток эффективной терапии и не менее 4 суток после разрешения лихорадки и стабилизации.");
+  out.duration.push("S. aureus в крови: не менее 14 суток от первого отрицательного посева (при осложнённом течении 4–6 недель), эхокардиография обязательна.");
+  out.duration.push("Кандидемия: 14 суток от первого отрицательного посева; инвазивный аспергиллёз: не менее 6–12 недель и до разрешения очагов и восстановления нейтрофилов.");
+  out.duration.push("Пневмония: 7–10 суток; нейтропенический энтероколит: до разрешения симптомов и восстановления нейтрофилов.");
+
+  /* мониторинг */
+  out.monitor.push("Витальные показатели и диурез каждые 4 ч (при нестабильности — ежечасно), лактат при исходном повышении — каждые 2 ч.");
+  out.monitor.push("Общий анализ крови, креатинин, электролиты, печёночные пробы, СРБ — ежедневно; прокальцитонин по показаниям.");
+  if (out.rx.concat(out.addons).some(x => /Ванкомицин(?! внутрь)/.test(x.n))) out.monitor.push("Ванкомицин: целевая AUC24 400–600 мг·ч/л, первый уровень в первые 24–48 ч, далее каждые 48–72 ч и при изменении функции почек.");
+  if (out.addons.some(x => /Амикацин|Гентамицин/.test(x.n))) out.monitor.push("Аминогликозид: уровень через 8–12 ч после дозы (номограмма), остаточная концентрация ниже порога, ежедневно креатинин; при терапии более 2 недель — аудиометрия.");
+  if (out.fungal.some(x => /Вориконазол/.test(x.n))) out.monitor.push("Вориконазол: остаточная концентрация 1–5,5 мг/л с 4-х суток, контроль печёночных проб, зрения и лекарственных взаимодействий.");
+  if (out.fungal.some(x => /Позаконазол/.test(x.n))) out.monitor.push("Позаконазол: уровень на 5–7-е сутки (лечение ≥ 1000 нг/мл).");
+  out.monitor.push("Г-КСФ: рутинно при уже развившейся фебрильной нейтропении не показан; рассматривается при высоком риске осложнений (сепсис, пневмония, ожидаемая длительная глубокая нейтропения, возраст > 65 лет).");
+  return out;
+}
+
+function planSteps(p, r){
+  const D = k => { const x = doseOf(k, p); return `${x.n} — ${x.dose}`; };
+  const isCarba = ["meropenem","imipenem"].includes(r.baseKey);
+  const isNew = ["czataz","ceftol","cefiderocol"].includes(r.baseKey);
+  const unstable = r.shock.suspected || r.sofa.dys >= 2;
+  const line1 = [...r.rx, ...r.addons].map(x => `${x.n} — ${x.dose}`);
+  const line2 = [];
+  if (isNew) line2.push(`сохранить ${DRUGS[r.baseKey].n} и добавить второй активный препарат по чувствительности (аминогликозид, полимиксин B или азтреонам) — решение с клиническим фармакологом`);
+  else if (isCarba) { line2.push(D("czataz") + " (при карбапенеморезистентности без металло-β-лактамазы)"); line2.push(D("cefiderocol") + " или комбинация цефтазидим/авибактам + " + D("aztreonam") + " (при металло-β-лактамазе)"); }
+  else line2.push("эскалация до карбапенема: " + D("meropenem"));
+  if (!r.addons.some(x => /Амикацин|Гентамицин/.test(x.n))) line2.push("второй антисинегнойный препарат на 48–72 ч: " + D("amikacin"));
+  if (!r.addons.some(x => /Ванкомицин(?! внутрь)|Линезолид|Даптомицин/.test(x.n))) line2.push("анти-MRSA компонент: " + D("vanco") + " (при пневмонии или колонизации VRE — " + D("linezolid") + ")");
+  if (!r.fungal.length) line2.push("противогрибковая терапия: " + D("caspo") + " или " + D("lamb"));
+  const steps = [];
+  steps.push({when:"0–60 минут", cls:"crit", title:"Линия 1 — старт эмпирической терапии",
+    acts:["Две пары гемокультур (периферия и каждый просвет ЦВК) и посевы из подозрительных локусов — до первой дозы, но не задерживая её.",
+      "Первая доза антибиотика в течение 60 минут от регистрации лихорадки.",
+      ...(unstable ? ["Инфузионная нагрузка 30 мл/кг кристаллоидов при гипотензии или лактате ≥ 4, лактат повторно через 2 ч, перевод в ОРИТ."] : []),
+      "Схема линии 1: " + line1.join("; ") + "."],
+    br:[]});
+  steps.push({when:unstable ? "через 6–12 часов" : "через 24 часа", cls:unstable ? "crit" : "", title:"Первая контрольная точка",
+    acts:["Оценить: температура, АД, диурез, лактат, сознание, SOFA; ответ на инфузию и потребность в вазопрессорах.",
+      "Уточнить очаг: осмотр ЦВК, полости рта, перианальной области, кожи; при респираторной симптоматике — КТ органов грудной клетки."],
+    br:[["Нарастание органной недостаточности: прирост SOFA ≥ 2, новая потребность в вазопрессорах, лактат растёт, сознание ухудшается",
+        "Немедленно перейти к линии 2 (не дожидаясь 48 часов): " + line2.join("; ") + ". Обсудить удаление ЦВК и хирургический контроль очага."],
+      ["Стабилизация, лихорадка сохраняется", "Схему не менять, продолжить линию 1 и наблюдение до плановой оценки через 48–72 часа."]]});
+  steps.push({when:"48–72 часа", cls:"", title:"Плановая оценка и решение о линии 2",
+    acts:["Получены предварительные результаты посевов и галактоманнана; повторить гемокультуры при сохраняющейся лихорадке.",
+      "Пересчитать SOFA и СКФ, пересмотреть дозы."],
+    br:[["Лихорадки нет ≥ 48 часов, гемодинамика стабильна, возбудитель не выделен",
+        "Продолжать линию 1; при стабильности терапию можно прекратить после 72 часов лечения независимо от числа нейтрофилов (ECIL-4) при наблюдении в стационаре. Анти-MRSA компонент отменить."],
+      ["Возбудитель выделен", "Перейти на направленную терапию по чувствительности (деэскалация), сохранив антисинегнойный охват только при соответствующем возбудителе. Длительность считать от первого отрицательного посева."],
+      ["Лихорадка сохраняется, состояние стабильное, очаг не найден",
+        "Антибиотик вслепую не менять. Выполнить КТ органов грудной клетки и придаточных пазух, галактоманнан, УЗИ или КТ брюшной полости, повторить посевы, осмотреть ЦВК. Решение о линии 2 принимать по найденным данным."],
+      ["Лихорадка сохраняется и есть ухудшение или новый очаг",
+        "Линия 2: " + line2.join("; ") + "."]]});
+  steps.push({when:"4–7-е сутки", cls:"later", title:"Линия 2 и противогрибковая тактика",
+    acts:["При сохраняющейся лихорадке более 4 суток и ожидаемой длительной нейтропении — эмпирическая или упреждающая антимикотическая терапия: " + D("caspo") + "; при признаках плесневого поражения — " + D("vori") + " или " + D("isavu") + "; при подозрении на мукормикоз — " + D("lamb") + " и срочная ЛОР- или хирургическая ревизия.",
+      "Пересмотреть необходимость удаления ЦВК: обязательно при S. aureus, P. aeruginosa, Candida, туннельной инфекции, шоке и бактериемии более 72 часов.",
+      "Искать неинфекционные причины лихорадки: лекарственная лихорадка, тромбоз, трансфузионные реакции, опухолевая лихорадка, синдром восстановления."],
+    br:[["Ответ есть, лихорадка снижается", "Продолжить текущую линию, готовить деэскалацию по посевам; антимикотик продолжать до восстановления нейтрофилов и разрешения очагов."],
+      ["Ответа нет, лихорадка и очаг сохраняются", "Линия 3: пересмотреть охват по локальной эпидемиологии и посевам — " + D("cefiderocol") + " либо " + D("czataz") + " ± " + D("aztreonam") + "; при карбапенеморезистентном A. baumannii добавить " + D("polymyxin") + "; сменить класс антимикотика; консультации инфекциониста, клинического фармаколога, хирурга; повторная визуализация."]]});
+  steps.push({when:"после нормализации", cls:"later", title:"Деэскалация, отмена и выписка",
+    acts:["Деэскалация: анти-MRSA отменить без подтверждения грамположительного возбудителя; комбинацию свести к монотерапии по чувствительности; перейти на пероральную форму при стабильности и восстановлении нейтрофилов (> 0,5 × 10⁹/л).",
+      ...r.duration,
+      "Отмена антибактериальной терапии — при отсутствии лихорадки ≥ 48 часов, стабильной гемодинамике и разрешении очага; при документированной инфекции — по срокам для её локализации."],
+    br:[]});
+  return steps;
+}
+/* ================== состояние и хранилище ================== */
+const S = {db:null, sample:null, downloads:null, tab:"assess", ep:newEpisode(), list:[], busy:false, ai:{}, imgs:[], pdf:{files:[], status:"", busy:false, res:null, err:"", ctl:null, pages:0}};
+function newEpisode(){
+  return {id:rid(), createdAt:new Date().toISOString(), author:lsGet("fn-user") || "", name:"", card:"", age:"", sex:"", weight:"", height:"", scr:"",
+    dx:"", chemo:"", neutroStart:"", anc:"", ancFalling:false, expDuration:"short", prophylaxis:"none", priorAbx:"none", comorbid:false, copd:false,
+    tempMax:"", tempSustained:false, feverStart:nowLocal(), feverDays:0, sbp:"", dbp:"", hr:"", rr:"", spo2:"", fio2:"", po2:"", gcs:"", lactate:"",
+    plt:"", bil:"", crea_umol:"", sofaBase:"", diur24:"", norad:"", adr:"", dopa:"", dobu:"", vent:"0", rrt:"none",
+    masccBurden:"mod", dehydration:false, outpatient:false, solidOrNoFungal:false,
+    foci:{}, ct:{}, ctText:"", ctAi:"", colonization:{}, cultures:[], gm:"", bdg:"", gramPosBlood:false, candidemia:false, cdiff:false, hsv:false,
+    abxStart:"", regimen:"", outcome:"", note:""};
+}
+function Local(){
+  const KEY = "fn-cases";
+  let all = {}; try { all = JSON.parse(lsGet(KEY)) || {}; } catch(e) {}
+  const save = () => lsSet(KEY, JSON.stringify(all));
+  return {kind:"local",
+    listen(cb){ setTimeout(() => cb(Object.values(all))); return () => {}; },
+    async put(ep){ all[ep.id] = ep; save(); render(); },
+    async del(id){ delete all[id]; save(); render(); }};
+}
+function Remote(db){
+  return {kind:"db",
+    listen(cb, err){ return db.collection("cases").onSnapshot(s => cb(s.docs.map(d => ({id:d.id, ...d.data()}))), err); },
+    async put(ep){ await db.doc("cases/" + ep.id).set(ep); },
+    async del(id){ await db.doc("cases/" + id).delete(); }};
+}
+
+/* ================== отрисовка ================== */
+const TABS = [["assess","Оценка пациента"],["pdf","Выписка (PDF)"],["rec","Рекомендация"],["img","КТ и снимки"],["micro","Микробиология"],["ref","Справочник доз"],["cases","Эпизоды"],["an","Аналитика"]];
+function render(){
+  $("#tabs").innerHTML = TABS.map(([k, l]) => `<button class="tab" role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join("");
+  const v = $("#view");
+  v.innerHTML = S.tab === "assess" ? assessHTML() : S.tab === "pdf" ? pdfHTML() : S.tab === "rec" ? recHTML() : S.tab === "img" ? imgHTML()
+    : S.tab === "micro" ? microHTML() : S.tab === "ref" ? refHTML() : S.tab === "cases" ? casesHTML() : anHTML();
+}
+const F = (label, key, type, opts) => {
+  const val = S.ep[key] ?? "";
+  if (type === "sel") return `<label class="f">${label}<select data-k="${key}">${opts.map(([v, l]) => `<option value="${v}" ${String(val) === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>`;
+  if (type === "area") return `<label class="f" style="grid-column:1/-1">${label}<textarea data-k="${key}">${esc(val)}</textarea></label>`;
+  return `<label class="f">${label}<input data-k="${key}" type="${type || "text"}" value="${esc(val)}"></label>`;
+};
+const CB = (label, key, group) => {
+  const v = group ? !!(S.ep[group] || {})[key] : !!S.ep[key];
+  return `<label class="chk"><input type="checkbox" data-k="${key}" ${group ? `data-g="${group}"` : ""} ${v ? "checked" : ""}><span>${label}</span></label>`;
+};
+function assessHTML(){
+  return `<div class="card"><h3>Пациент</h3><div class="grid">
+    ${F("ФИО или код", "name")}${F("№ истории болезни", "card")}${F("Возраст, лет", "age")}
+    ${F("Пол", "sex", "sel", [["", "не указан"],["m","мужской"],["f","женский"]])}
+    ${F("Масса тела, кг", "weight")}${F("Рост, см", "height")}${F("Креатинин, мг/дл", "scr")}
+    ${F("Креатинин, мкмоль/л", "crea_umol")}
+    ${F("Заместительная почечная терапия", "rrt", "sel", [["none","нет"],["hd","интермиттирующий гемодиализ"],["crrt","ПЗПТ"]])}
+    ${F("Основной диагноз", "dx")}${F("Режим химиотерапии, день курса", "chemo")}
+    </div><p class="snote">СКФ считается по CKD-EPI 2021; для доз она пересчитывается на площадь поверхности тела пациента (нужны рост и масса), от неё зависят все дозы в рекомендации. Креатинин достаточно внести в одном поле — в мг/дл или в мкмоль/л, второе значение пересчитывается (1 мг/дл = 88,4 мкмоль/л).</p></div>
+
+  <div class="card"><h3>Нейтропения и лихорадка</h3><div class="grid">
+    ${F("Нейтрофилы, ×10⁹/л", "anc")}
+    ${F("Начало нейтропении", "neutroStart", "date")}
+    ${F("Ожидаемая длительность нейтропении", "expDuration", "sel", [["short","до 7 суток"],["long","более 7 суток (глубокая, ОМЛ/ТГСК)"]])}
+    ${F("Максимальная температура, °C", "tempMax")}
+    ${F("Начало лихорадки", "feverStart", "datetime-local")}
+    ${F("Суток лихорадки на антибиотиках", "feverDays")}
+    ${F("Профилактика", "prophylaxis", "sel", [["none","не проводилась"],["fq","фторхинолон"],["azole","азол"],["both","фторхинолон и азол"]])}
+    ${F("Предшествующая антибактериальная терапия", "priorAbx", "sel", [["none","не было"],["beta","β-лактам"],["carbapenem","карбапенем"],["other","другая"]])}
+  </div><div class="cols" style="margin-top:6px">
+    ${CB("Температура ≥ 38,0 °C сохранялась не менее 1 часа", "tempSustained")}
+    ${CB("Нейтрофилы < 1,0 с ожидаемым снижением ниже 0,5 в 48 ч", "ancFalling")}
+    ${CB("Значимая сопутствующая патология (сердечная, почечная, печёночная недостаточность)", "comorbid")}
+    ${CB("ХОБЛ", "copd")}
+  </div></div>
+
+  <div class="card"><h3>Гемодинамика, дыхание, органные показатели</h3><div class="grid">
+    ${F("САД, мм рт. ст.", "sbp")}${F("ДАД", "dbp")}${F("ЧСС", "hr")}${F("ЧДД", "rr")}
+    ${F("SpO₂, %", "spo2")}${F("FiO₂, %", "fio2")}${F("PaO₂, мм рт. ст.", "po2")}
+    ${F("Респираторная поддержка", "vent", "sel", [["0","нет"],["1","НИВЛ или высокопоточная O₂"],["2","инвазивная ИВЛ"]])}
+    ${F("Шкала Глазго", "gcs")}${F("Лактат, ммоль/л", "lactate")}
+    ${F("Тромбоциты, ×10⁹/л", "plt")}${F("Билирубин, мкмоль/л", "bil")}${F("Диурез, мл/сут", "diur24")}
+    ${F("Норадреналин, мкг/кг/мин", "norad")}${F("Адреналин, мкг/кг/мин", "adr")}${F("Дофамин, мкг/кг/мин", "dopa")}${F("Добутамин, мкг/кг/мин", "dobu")}
+    ${F("Исходный SOFA до эпизода", "sofaBase")}
+  </div><p class="snote">Незаполненные поля в SOFA не учитываются и перечисляются как «нет данных». Исходный SOFA — оценка до лихорадки (например, стойкая тромбоцитопения после курса). Если он не указан, органная дисфункция считается без коагуляционного компонента.</p></div>
+
+  <div class="card"><h3>Шкала MASCC (риск осложнений)</h3><div class="grid">
+    ${F("Тяжесть симптомов", "masccBurden", "sel", [["none","симптомов нет или они минимальны (5)"],["mod","умеренные симптомы (3)"],["sev","тяжёлые симптомы (0)"]])}
+  </div><div class="cols">
+    ${CB("Обезвоживание, требующее инфузионной терапии", "dehydration")}
+    ${CB("Амбулаторный статус на момент лихорадки", "outpatient")}
+    ${CB("Солидная опухоль либо гемобластоз без грибковой инфекции в анамнезе", "solidOrNoFungal")}
+  </div></div>
+
+  <div class="card"><h3>Клинические очаги</h3><div class="cols">${FOCI.map(([k, l]) => CB(l, k, "foci")).join("")}</div>
+    <div class="cols" style="margin-top:6px">
+      ${CB("Грамположительные кокки в гемокультуре (до идентификации)", "gramPosBlood")}
+      ${CB("Кандидемия подтверждена", "candidemia")}
+      ${CB("Инфекция C. difficile подтверждена", "cdiff")}
+      ${CB("Герпетический мукозит (ВПГ)", "hsv")}
+    </div>
+  </div>
+
+  <div class="card"><h3>Колонизация и резистентность в анамнезе</h3><div class="cols">${PHEN.filter(x => x.id !== "sens").map(x => CB(x.n, x.id, "colonization")).join("")}</div>
+    <div class="grid" style="margin-top:8px">
+      ${F("Галактоманнан", "gm", "sel", [["","не исследован"],["neg","отрицательный"],["pos","положительный"]])}
+      ${F("Бета-D-глюкан", "bdg", "sel", [["","не исследован"],["neg","отрицательный"],["pos","положительный"]])}
+    </div>
+  </div>
+  <div class="row noprint"><button class="btn primary" data-act="toRec">Показать рекомендацию</button><button class="btn" data-act="save">Сохранить эпизод</button><button class="btn ghost" data-act="new">Новый эпизод</button><span class="msg" id="saveMsg"></span></div>`;
+}
+function tile(l, v, s, c){ return `<div class="tile ${c || ""}"><div class="tl">${l}</div><div class="tv">${v}</div><div class="ts">${esc(s || "")}</div></div>`; }
+function recHTML(){
+  const p = S.ep, r = recommend(p), so = r.sofa, ms = r.mascc, c = r.gfr;
+  let o = `<div class="tiles">
+    ${tile("Фебрильная нейтропения", r.fn ? "да" : "нет", r.fn ? "критерии выполнены" : "критерии не выполнены", r.fn ? "crit" : "")}
+    ${tile("SOFA", so.total, (so.base != null ? `прирост ${so.dys}` : so.parts.coag && so.parts.coag.p ? `без коагуляции ${so.dys}` : "по внесённым данным") + (so.miss.length ? "; нет данных: " + so.miss.join(", ") : ""), so.dys >= 6 ? "crit" : so.dys >= 2 ? "warn" : "ok")}
+    ${tile("qSOFA", r.qsofa.score + "/3", r.qsofa.map != null ? `ср. АД ${fN(r.qsofa.map,0)}` : "", r.qsofa.score >= 2 ? "crit" : "ok")}
+    ${tile("MASCC", ms.total, ms.low ? "≥ 21 — низкий риск" : "< 21 — высокий риск", ms.low ? "ok" : "warn")}
+    ${tile("Лактат", fN(num(p.lactate), 1), num(p.lactate) == null ? "нет данных" : "ммоль/л", num(p.lactate) == null ? "" : num(p.lactate) >= 4 ? "crit" : num(p.lactate) > 2 ? "warn" : "ok")}
+    ${tile("СКФ (CKD-EPI)", c ? fN(c.idx, 0) : "—", c ? (c.bsa ? `мл/мин/1,73 м²; для доз ${fN(c.v, 0)} мл/мин` : "мл/мин/1,73 м²; для доз без пересчёта на ППТ") : "нужны возраст, пол, креатинин", !c ? "" : c.idx < 30 ? "crit" : c.idx < 60 ? "warn" : "ok")}
+    ${tile("Риск", r.risk.cls === "high" ? "высокий" : "низкий", "", r.risk.cls === "high" ? "warn" : "ok")}
+  </div>`;
+  o += r.flags.map(f => `<div class="alert ${f.lvl}"><span class="lvl">${f.lvl === "crit" ? "критично" : f.lvl === "warn" ? "внимание" : "к сведению"}</span><b>${esc(f.t)}</b><p>${esc(f.d)}</p></div>`).join("");
+  o += `<div class="alert ${r.risk.cls === "high" ? "warn" : "ok"}"><span class="lvl">стратификация</span><b>${r.risk.t}</b><p>${esc(r.risk.d)}</p></div>`;
+  const rxBlock = (title, arr, note) => {
+    if (!arr.length) return "";
+    const items = arr.map(x => `<div class="rx"><div class="rxh"><span class="rxn">${esc(x.n)}</span><span class="dose">${esc(x.dose)}</span><span class="faint">${esc(x.basis || "")}</span></div><div class="why">${esc(x.why || "")}</div>${x.tdm ? `<div class="alt">Мониторинг: ${esc(x.tdm)}</div>` : ""}</div>`).join("");
+    return `<h3 class="sec">${esc(title)}</h3>` + items + (note ? `<p class="snote">${esc(note)}</p>` : "");
+  };
+  o += rxBlock("Стартовая эмпирическая терапия", r.rx, "Первая доза — в течение 60 минут от регистрации лихорадки; посевы берут до введения, но не задерживая терапию. При аллергии на β-лактамы немедленного типа: азтреонам или ципрофлоксацин в сочетании с ванкомицином (при тяжёлой инфекции — консультация аллерголога и десенсибилизация).");
+  o += rxBlock("Дополнения к схеме", r.addons);
+  o += rxBlock("Противогрибковая терапия", r.fungal);
+  o += rxBlock("Противовирусная и другая терапия", r.viral);
+  const list = (title, arr, cls) => arr.length ? `<h3 class="sec">${title}</h3><div class="card"><ul style="margin:0;padding-left:20px">${arr.map(x => `<li style="margin:5px 0">${esc(x)}</li>`).join("")}</ul></div>` : "";
+  o += list("Диагностика и контроль источника", r.source);
+  o += list("Деэскалация и пересмотр через 48–72 ч", r.deesc);
+  o += list("Длительность терапии", r.duration);
+  o += list("Мониторинг", r.monitor);
+  const steps = planSteps(p, r);
+  o += `<h3 class="sec">План по этапам</h3><div class="plan">` + steps.map(st => `<section class="step ${st.cls}">
+    <span class="when">${esc(st.when)}</span><h4>${esc(st.title)}</h4>
+    <ul>${st.acts.map(a => `<li>${esc(a)}</li>`).join("")}</ul>
+    ${st.br.map(([c, t]) => `<div class="branch"><span class="cond">Если ${esc(c.charAt(0).toLowerCase() + c.slice(1))}</span><span class="then">${esc(t)}</span></div>`).join("")}
+  </section>`).join("") + `</div>`;
+  o += `<h3 class="sec">Алгоритм</h3><div class="card"><div class="scroll"><table><thead><tr><th>Ситуация</th><th>Действие</th></tr></thead><tbody>
+    <tr><td>Лихорадка + нейтропения, гемодинамика стабильна, SOFA 0–1, очага нет</td><td>Монотерапия антисинегнойным β-лактамом (цефепим или пиперациллин/тазобактам), посевы, КТ при респираторной симптоматике</td></tr>
+    <tr><td>Очаг в брюшной полости, энтероколит, перианальный очаг</td><td>Пиперациллин/тазобактам или карбапенем (охват анаэробов); при цефепиме добавить метронидазол; консультация хирурга</td></tr>
+    <tr><td>Пневмония, инфекция ЦВК, кожи, колонизация MRSA, грамположительные кокки в крови</td><td>К β-лактаму добавить ванкомицин (при пневмонии и VRE — линезолид); отмена через 48–72 ч без подтверждения</td></tr>
+    <tr><td>Нестабильная гемодинамика, септический шок</td><td>Карбапенем + анти-MRSA ± аминогликозид или полимиксин при риске полирезистентной флоры; ОРИТ, инфузия, вазопрессоры, контроль лактата</td></tr>
+    <tr><td>Колонизация БЛРС</td><td>Карбапенем с первой дозы</td></tr>
+    <tr><td>Колонизация CRE/CPE</td><td>Цефтазидим/авибактам (при металло-β-лактамазе — цефидерокол либо цефтазидим/авибактам + азтреонам); консультация инфекциониста</td></tr>
+    <tr><td>P. aeruginosa DTR, A. baumannii CR</td><td>Цефтолозан/тазобактам либо цефидерокол по чувствительности; при CRAB — комбинация с полимиксином или сульбактамом</td></tr>
+    <tr><td>Лихорадка более 4 суток, нейтропения более 7 суток</td><td>КТ органов грудной клетки, галактоманнан; эмпирическая или упреждающая антимикотическая терапия</td></tr>
+    <tr><td>КТ: узлы с ореолом, полости, положительный галактоманнан</td><td>Вориконазол или изавуконазол; при подозрении на мукормикоз — липосомальный амфотерицин B и хирургическая санация</td></tr>
+    <tr><td>Стабилен, лихорадки нет ≥ 48 ч, возбудитель не выделен, прошло ≥ 72 ч терапии</td><td>Отмена антибактериальной терапии независимо от числа нейтрофилов (ECIL-4) при наблюдении в стационаре</td></tr>
+    <tr><td>Возбудитель выделен</td><td>Направленная терапия по чувствительности, длительность по локализации инфекции</td></tr>
+  </tbody></table></div></div>`;
+  o += `<h3 class="sec">Разбор случая ИИ</h3><div class="ai" id="aiBox">${aiBox("case", "ИИ сопоставит данные пациента, шкалы, очаг, посевы и предложенную схему, укажет пробелы в обследовании и спорные места.")}</div>`;
+  o += `<div class="row noprint" style="margin-top:12px"><button class="btn" data-act="save">Сохранить эпизод</button><button class="btn" data-act="print">Печать</button>${S.downloads ? `<button class="btn" data-act="export">Выгрузить рекомендацию (CSV)</button>` : ""}</div>`;
+  return o;
+}
+function aiBox(key, hint){
+  const st = S.ai[key] || {};
+  if (!S.sample) return `<div class="muted">Функции ИИ доступны, когда страница открыта в Claude.</div>`;
+  let h = `<div class="row">`;
+  h += st.busy ? `<span class="faint">Анализирую…</span><button class="btn" data-ai-stop="${key}">Остановить</button>`
+    : `<span class="faint" style="flex:1;min-width:220px">${esc(hint)}</span><button class="btn primary" data-ai="${key}">${st.text ? "Обновить" : "Запросить разбор"}</button>`;
+  h += `</div>`;
+  if (st.err) h += `<div class="msg err" style="margin-top:8px">${esc(st.err)}</div>`;
+  if (st.busy && !st.text) h += `<div class="aitext thinking" style="margin-top:8px">Думаю…</div>`;
+  if (st.text) h += `<div class="aitext">${md(st.text)}</div>`;
+  return h + `<div class="disc">Ответ ИИ — вспомогательное мнение по введённым данным, не заменяет решение врача и локальный протокол.</div>`;
+}
+function md(src){
+  const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  let out = "", list = null; const close = () => { if (list) { out += `</${list}>`; list = null; } };
+  for (const raw of String(src).split("\n")) {
+    const l = raw.trim(); if (!l) { close(); continue; }
+    let m;
+    if ((m = l.match(/^#{1,4}\s+(.*)/))) { close(); out += `<h4>${inl(m[1])}</h4>`; }
+    else if ((m = l.match(/^[-*•]\s+(.*)/))) { if (list !== "ul") { close(); out += "<ul>"; list = "ul"; } out += `<li>${inl(m[1])}</li>`; }
+    else if ((m = l.match(/^\d+[.)]\s+(.*)/))) { if (list !== "ol") { close(); out += "<ol>"; list = "ol"; } out += `<li>${inl(m[1])}</li>`; }
+    else { close(); out += `<p>${inl(l)}</p>`; }
+  }
+  close(); return out;
+}
+function imgHTML(){
+  return `<div class="card"><h3>Находки КТ</h3><div class="cols">${CT.map(([k, l]) => CB(l, k, "ct")).join("")}</div>
+    <div class="grid" style="margin-top:8px">${F("Текст описания или заключения исследования", "ctText", "area")}</div>
+    <div class="row noprint">${S.sample ? `<button class="btn" data-ai="ctText">Разобрать описание (ИИ)</button>` : ""}</div>
+    <div class="ai" style="margin-top:10px">${aiBox("ctText", "ИИ отметит находки из списка по тексту заключения и объяснит их значение при нейтропении.")}</div>
+  </div>
+  <div class="card"><h3>Снимки</h3>
+    <label class="drop" id="drop"><input type="file" accept="image/*" multiple><b>Выберите изображения КТ или рентгенограмм</b><span class="faint">или перетащите их сюда (JPEG, PNG)</span></label>
+    <div class="thumbs" id="thumbs">${S.imgs.map((x, i) => `<div><img src="${x.url}" alt="снимок ${i+1}"><div class="row"><button class="btn ghost danger" data-delimg="${i}">Убрать</button></div></div>`).join("")}</div>
+    <div class="row noprint" style="margin-top:10px">${S.sample ? `<button class="btn primary" data-ai="ctImg" ${S.imgs.length ? "" : "disabled"}>Расшифровать снимки (ИИ)</button>` : `<span class="muted">Расшифровка снимков доступна при открытии страницы в Claude.</span>`}</div>
+    <div class="ai" style="margin-top:10px">${aiBox("ctImg", "ИИ опишет видимые изменения и сопоставит их с типичными картинами при нейтропении. Это не заключение рентгенолога.")}</div>
+    <p class="disc">Изображения передаются в Claude для анализа и не сохраняются в приложении. Перед загрузкой убедитесь, что снимок обезличен и что передача данных согласована в вашей организации.</p>
+  </div>
+  <div class="card"><h3>Значение находок</h3><div class="scroll"><table><thead><tr><th>Находка</th><th>Клиническое значение</th></tr></thead><tbody>
+    ${CT.map(([k, l, d]) => `<tr><td>${esc(l)}</td><td>${esc(d)}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
+function microHTML(){
+  const cul = S.ep.cultures || [];
+  const targeted = [
+    ["БЛРС (ESBL) у Enterobacterales", "Карбапенем (меропенем 1 г каждые 8 ч) — препарат выбора при тяжёлой инфекции и бактериемии. При цистите возможны альтернативы по чувствительности. Пиперациллин/тазобактам при бактериемии с БЛРС уступает карбапенему."],
+    ["AmpC (Enterobacter, Serratia, Citrobacter)", "Цефепим при низкой МПК или карбапенем; цефтриаксон и цефотаксим не применять из-за риска индукции."],
+    ["CRE/CPE без металло-β-лактамазы", "Цефтазидим/авибактам, меропенем/ваборбактам или имипенем/релебактам по чувствительности; комбинации обсуждать с инфекционистом."],
+    ["Металло-β-лактамаза (NDM, VIM, IMP)", "Цефидерокол либо цефтазидим/авибактам в сочетании с азтреонамом; консультация клинического фармаколога обязательна."],
+    ["P. aeruginosa DTR", "Цефтолозан/тазобактам, цефтазидим/авибактам, имипенем/релебактам или цефидерокол по чувствительности; монотерапия при подтверждённой чувствительности."],
+    ["Карбапенеморезистентный A. baumannii", "Сульбактам-содержащие режимы в высоких дозах (ампициллин/сульбактам 3 г каждые 4 ч), полимиксин B, цефидерокол; как правило, комбинация."],
+    ["S. maltophilia", "Ко-тримоксазол 10–15 мг/кг/сут по триметоприму в 2–3 приёма; альтернатива — левофлоксацин или комбинация; карбапенемы неактивны."],
+    ["MRSA / MRSE", "Ванкомицин по AUC 400–600; при пневмонии или МПК ванкомицина 2 мг/л — линезолид; при бактериемии и эндоваскулярной инфекции — даптомицин 8–10 мг/кг."],
+    ["VRE (E. faecium)", "Линезолид 600 мг каждые 12 ч или даптомицин 10–12 мг/кг каждые 24 ч (при бактериемии); удаление ЦВК."],
+    ["Streptococcus viridans", "Часто резистентен к фторхинолонам при профилактике; при тяжёлой форме — ванкомицин до получения чувствительности; риск ОРДС и шока."],
+    ["Candida spp.", "Эхинокандин первой линией, удаление ЦВК, осмотр глазного дна, контрольные посевы, деэскалация на флуконазол при чувствительности и стабилизации."],
+    ["Aspergillus spp.", "Вориконазол или изавуконазол; терапия не менее 6–12 недель, контроль КТ и галактоманнана, проверка лекарственных взаимодействий."],
+    ["Мукормицеты", "Липосомальный амфотерицин B 5–10 мг/кг/сут, хирургическая санация, коррекция гипергликемии и отмена дефероксамина; далее изавуконазол или позаконазол."]
+  ];
+  return `<div class="card"><h3>Посевы</h3>
+    <div class="grid">
+      <label class="f">Дата<input id="cDate" type="date"></label>
+      <label class="f">Источник<select id="cSrc">${["Кровь (периферия)","Кровь (ЦВК)","Мокрота/БАЛ","Моча","Кал","Рана/мягкие ткани","Ликвор","Другое"].map(x => `<option>${x}</option>`).join("")}</select></label>
+      <label class="f">Возбудитель<select id="cOrg">${ORGS.map(o => `<option value="${o.id}">${o.n}</option>`).join("")}</select></label>
+      <label class="f">Фенотип резистентности<select id="cPhen">${PHEN.map(o => `<option value="${o.id}">${o.n}</option>`).join("")}</select></label>
+      <label class="f" style="grid-column:1/-1">Комментарий (МПК, чувствительность)<input id="cNote"></label>
+    </div>
+    <div class="row noprint"><button class="btn primary" data-act="addCulture">Добавить посев</button></div>
+    ${cul.length ? `<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Дата</th><th>Источник</th><th>Возбудитель</th><th>Фенотип</th><th>Комментарий</th><th></th></tr></thead><tbody>
+      ${cul.map((x, i) => `<tr><td>${esc(x.date || "—")}</td><td>${esc(x.src)}</td><td>${esc((ORGS.find(o => o.id === x.org) || {}).n || x.org)}</td><td>${esc((PHEN.find(o => o.id === x.phen) || {}).n || x.phen)}</td><td>${esc(x.note || "")}</td><td><button class="btn ghost danger" data-delcul="${i}">Удалить</button></td></tr>`).join("")}
+    </tbody></table></div>` : `<p class="snote">Посевы не внесены. Две пары гемокультур (периферия и каждый просвет ЦВК) берут до первой дозы антибиотика.</p>`}
+  </div>
+  <div class="card"><h3>Тактика при значимых возбудителях</h3><div class="scroll"><table><thead><tr><th>Фенотип</th><th>Тактика</th></tr></thead><tbody>
+    ${targeted.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="snote">Выбор всегда уточняется по локальной карте чувствительности и результату антибиотикограммы конкретного штамма.</p></div>`;
+}
+function refHTML(){
+  const c = gfr(S.ep);
+  return `<div class="card"><h3>Дозы с учётом функции почек</h3>
+    <p class="snote">${c ? `Дозы в колонке «Для пациента» рассчитаны для СКФ ${fN(c.v,0)} мл/мин (${c.note}).` : "Заполните возраст, пол, креатинин, а также рост и массу на вкладке «Оценка пациента», чтобы получить дозу для конкретного пациента."} ${S.ep.rrt !== "none" ? "Учтён режим заместительной почечной терапии." : ""}</p>
+    <div class="scroll"><table><thead><tr><th>Препарат</th><th>Группа</th><th>Для пациента</th><th>Гемодиализ</th><th>ПЗПТ</th><th>Мониторинг</th></tr></thead><tbody>
+    ${Object.entries(DRUGS).map(([k, d]) => { const x = doseOf(k, S.ep);
+      return `<tr><td><b>${esc(d.n)}</b></td><td class="faint">${esc(d.grp)}</td><td>${esc(x.dose)}</td><td>${esc(d.hd || "—")}</td><td>${esc(d.crrt || "—")}</td><td>${esc(d.tdm || "—")}</td></tr>`; }).join("")}
+    </tbody></table></div></div>
+    <div class="card"><h3>Целевые значения терапевтического мониторинга</h3><div class="scroll"><table><thead><tr><th>Препарат</th><th>Показатель</th><th>Цель</th><th>Когда</th></tr></thead><tbody>
+      <tr><td>Ванкомицин</td><td>AUC24/МПК</td><td>400–600 мг·ч/л</td><td>уровень в первые 24–48 ч, далее каждые 48–72 ч</td></tr>
+      <tr><td>Ванкомицин (диализ, ЦНС)</td><td>Остаточная концентрация</td><td>15–20 мг/л</td><td>перед сеансом диализа или с утренними анализами</td></tr>
+      <tr><td>Амикацин (расширенный интервал)</td><td>Уровень по номограмме, остаточная концентрация</td><td>остаточная < 4 мкг/мл</td><td>через 8–12 ч после дозы; далее не реже 1 раза в неделю</td></tr>
+      <tr><td>Гентамицин/тобрамицин</td><td>Остаточная концентрация</td><td>< 1 мкг/мл</td><td>через 8–12 ч после дозы</td></tr>
+      <tr><td>Вориконазол</td><td>Остаточная концентрация</td><td>1–5,5 мг/л</td><td>с 4-х суток; после изменения дозы — через 4–7 дней</td></tr>
+      <tr><td>Позаконазол</td><td>Уровень</td><td>профилактика ≥ 700 нг/мл, лечение ≥ 1000 нг/мл</td><td>5–7-е сутки</td></tr>
+      <tr><td>Итраконазол</td><td>Уровень (с гидроксиметаболитом)</td><td>профилактика > 0,5 мг/л, лечение > 1 мг/л, < 5 мг/л</td><td>5–7-е сутки при нагрузке, 10–14-е без неё</td></tr>
+      <tr><td>Флуцитозин</td><td>Пиковая концентрация</td><td>25–100 мг/л</td><td>через 2 ч после дозы, в первые 72 ч</td></tr>
+      <tr><td>Изавуконазол</td><td>Рутинный мониторинг</td><td>не требуется</td><td>по особым показаниям</td></tr>
+    </tbody></table></div>
+    <p class="disc">Данные адаптированы из руководств Stanford Health Care (Antimicrobial Dosing Reference Guide 2024, Vancomycin Dosing Guide 2023, Aminoglycoside Dosing Guideline, Antifungal TDM 2024), предоставленных для внутреннего использования, и инструкций производителей. Перед назначением сверяйте с инструкцией, зарегистрированной в вашей стране, и локальным формуляром.</p></div>`;
+}
+function casesHTML(){
+  const list = S.list.slice().sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  return `<div class="card"><h3>Сохранённые эпизоды (${list.length})</h3>
+    <div class="row noprint"><button class="btn primary" data-act="save">Сохранить текущий эпизод</button><button class="btn ghost" data-act="new">Новый эпизод</button></div>
+    ${list.length ? list.map(e => { const r = recommend(e);
+      return `<button class="epi" data-open="${e.id}" aria-current="${e.id === S.ep.id}">
+        <b>${esc(e.name || "Без имени")}</b> <span class="faint">${esc(e.card ? "№ " + e.card : "")} · ${fDT(e.createdAt)}</span>
+        <div class="snote">${esc(e.dx || "диагноз не указан")} · SOFA ${r.sofa.total} · MASCC ${r.mascc.total} · ${r.risk.cls === "high" ? "высокий риск" : "низкий риск"}${e.outcome ? " · исход: " + esc(e.outcome) : ""}</div></button>`; }).join("")
+      : `<p class="snote">Сохранённых эпизодов пока нет.</p>`}
+  </div>
+  <div class="card"><h3>Исход и запись о терапии</h3><div class="grid">
+    ${F("Время первой дозы антибиотика", "abxStart", "datetime-local")}
+    ${F("Стартовая схема (как назначено)", "regimen")}
+    ${F("Исход", "outcome", "sel", [["","не указан"],["resolved","разрешение лихорадки, выписан"],["deesc","деэскалация выполнена"],["escal","потребовалась эскалация"],["icu","перевод в ОРИТ"],["death","летальный исход"]])}
+    ${F("Автор записи", "author")}
+  </div>${F("Комментарий", "note", "area")}
+  <div class="row noprint"><button class="btn primary" data-act="save">Сохранить</button><button class="btn ghost danger" data-act="delete">Удалить эпизод</button></div></div>`;
+}
+function anHTML(){
+  const list = S.list;
+  if (!list.length) return `<div class="card"><h3>Аналитика</h3><p class="snote">Нет сохранённых эпизодов. Аналитика строится по сохранённым случаям.</p></div>`;
+  const rs = list.map(e => ({e, r:recommend(e)}));
+  const n = list.length;
+  const highRisk = rs.filter(x => x.r.risk.cls === "high").length;
+  const shockN = rs.filter(x => x.r.shock.suspected).length;
+  const sofaAvg = rs.reduce((a, x) => a + x.r.sofa.total, 0) / n;
+  const withCult = list.filter(e => (e.cultures || []).length).length;
+  const mdroN = list.filter(e => (e.cultures || []).some(c => ["esbl","cre","mbl","dtr","mrsa","vre","crab"].includes(c.phen))).length;
+  const t2a = list.map(e => (e.abxStart && e.feverStart) ? (new Date(e.abxStart) - new Date(e.feverStart)) / 6e4 : null).filter(x => x != null && x >= 0 && x < 2880);
+  const t2aMed = t2a.length ? t2a.slice().sort((a, b) => a - b)[Math.floor(t2a.length / 2)] : null;
+  const within60 = t2a.filter(x => x <= 60).length;
+  const outcomes = {}; list.forEach(e => { const k = e.outcome || "не указан"; outcomes[k] = (outcomes[k] || 0) + 1; });
+  const orgCount = {}; list.forEach(e => (e.cultures || []).forEach(c => { const nm = (ORGS.find(o => o.id === c.org) || {}).n || c.org; orgCount[nm] = (orgCount[nm] || 0) + 1; }));
+  const fociCount = {}; list.forEach(e => FOCI.forEach(([k, l]) => { if ((e.foci || {})[k]) fociCount[l.split(":")[0]] = (fociCount[l.split(":")[0]] || 0) + 1; }));
+  const bars = (obj, total) => { const ent = Object.entries(obj).sort((a, b) => b[1] - a[1]); const mx = Math.max(1, ...ent.map(x => x[1]));
+    return ent.length ? `<div class="bars">${ent.map(([k, v]) => `<div class="bar"><span>${esc(k)}</span><i style="width:${Math.round(v / mx * 100)}%"></i><b>${v}${total ? ` (${Math.round(v / total * 100)}%)` : ""}</b></div>`).join("")}</div>` : `<p class="snote">нет данных</p>`; };
+  return `<div class="tiles">
+    ${tile("Эпизодов", n, "сохранено в базе")}
+    ${tile("Высокий риск", `${Math.round(highRisk / n * 100)}%`, `${highRisk} из ${n}`, highRisk / n > 0.5 ? "warn" : "ok")}
+    ${tile("С нестабильной гемодинамикой", shockN, "сепсис или шок", shockN ? "crit" : "ok")}
+    ${tile("Средний SOFA", fN(sofaAvg, 1), "по сохранённым эпизодам", sofaAvg >= 2 ? "warn" : "ok")}
+    ${tile("Антибиотик в первый час", t2a.length ? `${Math.round(within60 / t2a.length * 100)}%` : "—", t2aMed != null ? `медиана ${fN(t2aMed,0)} мин` : "нет времени старта", t2a.length && within60 / t2a.length < 0.8 ? "warn" : "ok")}
+    ${tile("Посевы взяты", `${Math.round(withCult / n * 100)}%`, `${withCult} из ${n}`, withCult / n < 0.9 ? "warn" : "ok")}
+    ${tile("Полирезистентная флора", mdroN, "эпизодов с MDRO", mdroN ? "warn" : "ok")}
+  </div>
+  <div class="card"><h3>Возбудители</h3>${bars(orgCount)}</div>
+  <div class="card"><h3>Клинические очаги</h3>${bars(fociCount, n)}</div>
+  <div class="card"><h3>Исходы</h3>${bars(outcomes, n)}</div>
+  <div class="card"><h3>Разбор практики (ИИ)</h3><div class="ai">${aiBox("audit", "ИИ оценит структуру эпизодов, сроки старта терапии, охват посевами и соответствие деэскалации протоколу.")}</div></div>`;
+}
+
+/* ================== импорт выписки из PDF ================== */
+const PDFJS_VER = "3.11.174";
+let pdfjsP = null;
+function loadScript(src){ return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = () => rej(new Error("script")); document.head.appendChild(el); }); }
+function loadPdfJs(){
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  pdfjsP = pdfjsP || (async () => {
+    await loadScript(`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VER}/pdf.min.js`);
+    await loadScript(`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VER}/pdf.worker.min.js`);
+    if (window.__pdfjsReady) await window.__pdfjsReady;
+    if (!window.pdfjsLib) throw new Error("pdfjs");
+    return window.pdfjsLib;
+  })().catch(e => { pdfjsP = null; throw e; });
+  return pdfjsP;
+}
+async function pageText(pdf, n){
+  const pg = await pdf.getPage(n), tc = await pg.getTextContent(), rows = [];
+  for (const it of tc.items) {
+    if (!it.str || !it.str.trim()) continue;
+    const y = it.transform[5], x = it.transform[4];
+    let r = rows.find(z => Math.abs(z.y - y) <= 3);
+    if (!r) { r = {y, items:[]}; rows.push(r); }
+    r.items.push({x, s:it.str});
+  }
+  rows.sort((a, b) => b.y - a.y);
+  return rows.map(r => r.items.sort((a, b) => a.x - b.x).map(i => i.s).join("  ").replace(/[ \t]{3,}/g, "  ").trim()).join("\n");
+}
+async function pageImage(pdf, n){
+  const pg = await pdf.getPage(n), v0 = pg.getViewport({scale:1});
+  const sc = Math.min(2.2, 1700 / Math.max(v0.width, v0.height)), vp = pg.getViewport({scale:sc});
+  const c = document.createElement("canvas"); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+  await pg.render({canvasContext:ctx, viewport:vp}).promise;
+  return await new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+}
+const PDF_FIELDS = {
+  name:["ФИО или код", "t"], card:["№ истории болезни", "t"], age:["Возраст, лет", "n"], sex:["Пол", "sex"],
+  weight:["Масса тела, кг", "n"], height:["Рост, см", "n"], scr:["Креатинин, мг/дл", "n"], crea_umol:["Креатинин, мкмоль/л", "n"],
+  dx:["Диагноз", "t"], chemo:["Режим химиотерапии", "t"], anc:["Нейтрофилы, ×10⁹/л", "n"], plt:["Тромбоциты, ×10⁹/л", "n"],
+  bil:["Билирубин, мкмоль/л", "n"], lactate:["Лактат, ммоль/л", "n"], tempMax:["Максимальная температура, °C", "n"],
+  sbp:["САД", "n"], dbp:["ДАД", "n"], hr:["ЧСС", "n"], rr:["ЧДД", "n"], spo2:["SpO₂, %", "n"], fio2:["FiO₂, %", "n"],
+  po2:["PaO₂", "n"], gcs:["Шкала Глазго", "n"], diur24:["Диурез, мл/сут", "n"], norad:["Норадреналин, мкг/кг/мин", "n"],
+  neutroStart:["Начало нейтропении", "d"], feverStart:["Начало лихорадки", "dt"], feverDays:["Суток лихорадки", "n"],
+  regimen:["Назначенная схема", "t"], ctText:["Описание исследований", "t"],
+  gm:["Галактоманнан", "gm"], bdg:["Бета-D-глюкан", "gm"], prophylaxis:["Профилактика", "prof"], priorAbx:["Предшествующая терапия", "prior"],
+  expDuration:["Ожидаемая длительность нейтропении", "dur"]
+};
+function pdfPrompt(text, pagesLabel){
+  const fields = Object.entries(PDF_FIELDS).map(([k, v]) => `${k} — ${v[0]}`).join("; ");
+  return `Ты извлекаешь данные из выписки или истории болезни гематологического пациента для карты фебрильной нейтропении. После проверки врачом данные попадут в расчёт шкал и выбор терапии, поэтому точность важнее полноты. Отвечай только JSON.
+
+ПРАВИЛА
+1. Только то, что явно написано в тексте. Ничего не додумывай; отсутствующее поле не включай.
+2. Числа — в указанных единицах; пересчитывай: креатинин мг/дл × 88,4 = мкмоль/л (заполняй оба поля scr и crea_umol), билирубин мг/дл × 17,1, нейтрофилы в клетках/мкл ÷ 1000 = ×10⁹/л.
+3. Если значений несколько, бери последние по дате, а для нейтрофилов, тромбоцитов, билирубина, креатинина и температуры — наихудшие за эпизод.
+4. Даты в формате ГГГГ-ММ-ДД, дата и время — ГГГГ-ММ-ДДTЧЧ:ММ. Год бери из документа; если год определить нельзя, дату не включай.
+5. sex: "m" или "f". gm и bdg: "pos", "neg" или "" . prophylaxis: none, fq, azole, both. priorAbx: none, beta, carbapenem, other. expDuration: short или long.
+6. foci и ct — только коды из списков ниже, для которых в тексте есть явное описание.
+7. colonization — маркеры резистентности, упомянутые в тексте (по посевам или в анамнезе).
+8. cultures — результаты посевов: дата, источник (Кровь (периферия), Кровь (ЦВК), Мокрота/БАЛ, Моча, Кал, Рана/мягкие ткани, Ликвор, Другое), код возбудителя, код фенотипа, комментарий с МПК.
+9. ctText — краткая выжимка описаний КТ, рентгенографии, УЗИ из документа (до 1500 символов).
+
+ПОЛЯ: ${fields}
+КОДЫ ОЧАГОВ: ${FOCI.map(([k, l]) => `${k} — ${l}`).join("; ")}
+КОДЫ НАХОДОК ВИЗУАЛИЗАЦИИ: ${CT.map(([k, l]) => `${k} — ${l}`).join("; ")}
+КОДЫ ВОЗБУДИТЕЛЕЙ: ${ORGS.map(o => `${o.id} — ${o.n}`).join("; ")}
+КОДЫ ФЕНОТИПОВ: ${PHEN.map(o => `${o.id} — ${o.n}`).join("; ")}
+
+ОТВЕТ — только JSON:
+{"fields":{"name":"...","age":54,"anc":0.2},"foci":["cvc"],"ct":["halo"],"colonization":["esbl"],"cultures":[{"date":"2026-09-10","src":"Кровь (ЦВК)","org":"ecoli","phen":"esbl","note":"МПК меропенема 0,25"}],"summary":"1–2 предложения о случае"}
+Если данных нет — пустые объекты и массивы.
+
+ФРАГМЕНТ ДОКУМЕНТА (${pagesLabel})
+${text}`;
+}
+function pdfValidate(raw, acc){
+  if (!raw || typeof raw !== "object") return;
+  const str = (x, n) => typeof x === "string" ? x.trim().slice(0, n) : "";
+  const f = raw.fields && typeof raw.fields === "object" ? raw.fields : {};
+  for (const [k, v] of Object.entries(f)) {
+    const def = PDF_FIELDS[k]; if (!def || acc.fields[k] != null) continue;
+    const kind = def[1];
+    if (kind === "n") { const n2 = num(v); if (n2 != null) acc.fields[k] = String(v).replace(",", "."); }
+    else if (kind === "sex") { if (v === "m" || v === "f") acc.fields[k] = v; }
+    else if (kind === "gm") { if (["pos","neg",""].includes(v)) acc.fields[k] = v; }
+    else if (kind === "prof") { if (["none","fq","azole","both"].includes(v)) acc.fields[k] = v; }
+    else if (kind === "prior") { if (["none","beta","carbapenem","other"].includes(v)) acc.fields[k] = v; }
+    else if (kind === "dur") { if (["short","long"].includes(v)) acc.fields[k] = v; }
+    else if (kind === "d") { const m = str(v, 20).match(/^\d{4}-\d{2}-\d{2}/); if (m) acc.fields[k] = m[0]; }
+    else if (kind === "dt") { const m = str(v, 24).match(/^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}))?/); if (m) acc.fields[k] = m[1] + "T" + (m[2] || "08:00"); }
+    else { const t = str(v, k === "ctText" ? 1800 : 300); if (t) acc.fields[k] = acc.fields[k] ? acc.fields[k] : t; }
+  }
+  for (const id of Array.isArray(raw.foci) ? raw.foci : []) if (FOCI.some(x => x[0] === id) && !acc.foci.includes(id)) acc.foci.push(id);
+  for (const id of Array.isArray(raw.ct) ? raw.ct : []) if (CT.some(x => x[0] === id) && !acc.ct.includes(id)) acc.ct.push(id);
+  for (const id of Array.isArray(raw.colonization) ? raw.colonization : []) if (PHEN.some(x => x.id === id) && id !== "sens" && !acc.colonization.includes(id)) acc.colonization.push(id);
+  for (const c of Array.isArray(raw.cultures) ? raw.cultures : []) {
+    const org = ORGS.some(o => o.id === c?.org) ? c.org : null; if (!org) continue;
+    const key = `${str(c.date, 12)}|${c.src}|${org}`;
+    if (acc.cultures.some(x => x.key === key)) continue;
+    acc.cultures.push({key, date:str(c.date, 12), src:str(c.src, 40) || "Другое", org, phen:PHEN.some(p2 => p2.id === c?.phen) ? c.phen : "sens", note:str(c.note, 160)});
+  }
+  const sm = str(raw.summary, 600); if (sm && !acc.summary) acc.summary = sm;
+}
+async function runPdf(){
+  if (!S.sample || S.pdf.busy) return;
+  if (!S.pdf.files.length) { S.pdf.err = "Выберите PDF-файл."; return render(); }
+  const ctl = new AbortController();
+  S.pdf = {...S.pdf, busy:true, err:"", res:null, ctl, status:"Загружаю модуль чтения PDF…", pages:0}; render();
+  const acc = {fields:{}, foci:[], ct:[], colonization:[], cultures:[], summary:"", skipped:[]};
+  try {
+    let lib; try { lib = await loadPdfJs(); } catch(e) { throw {code:"pdfjs"}; }
+    const lim = await S.sample.limits().catch(() => null), maxImg = Math.min(4, lim?.images?.maxCount || 0);
+    const batches = [];
+    for (const file of S.pdf.files) {
+      S.pdf.status = `Читаю «${file.name}»…`; render();
+      let pdf; try { pdf = await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise; }
+      catch(e) { acc.skipped.push(`${file.name}: файл не читается`); continue; }
+      const nP = Math.min(pdf.numPages, 80);
+      if (pdf.numPages > 80) acc.skipped.push(`${file.name}: обработаны первые 80 страниц из ${pdf.numPages}`);
+      let cur = null, scans = [];
+      const flushT = () => { if (cur) { batches.push(cur); cur = null; } };
+      const flushS = () => { if (scans.length) { batches.push({file:file.name, pdf, scan:scans}); scans = []; } };
+      for (let n = 1; n <= nP; n++) {
+        if (ctl.signal.aborted) throw {code:"cancelled"};
+        const t = await pageText(pdf, n);
+        if (t.replace(/\s/g, "").length < 80) {
+          flushT();
+          if (maxImg) { scans.push(n); if (scans.length >= maxImg) flushS(); }
+          else acc.skipped.push(`${file.name}, стр. ${n}: скан без текстового слоя`);
+        } else {
+          flushS();
+          const chunk = `\n=== СТРАНИЦА ${n} ===\n${t.slice(0, 9000)}`;
+          if (cur && (cur.text.length + chunk.length > 7000 || cur.pages.length >= 3)) flushT();
+          if (!cur) cur = {file:file.name, pdf, pages:[], text:""};
+          cur.pages.push(n); cur.text += chunk;
+        }
+      }
+      flushT(); flushS(); S.pdf.pages += nP;
+    }
+    for (let k = 0; k < batches.length; k++) {
+      const b = batches[k], pg = b.scan || b.pages;
+      S.pdf.status = `Анализирую ${k + 1} из ${batches.length}: «${b.file}», стр. ${pg[0]}${pg.length > 1 ? "–" + pg[pg.length - 1] : ""}…`; render();
+      try {
+        let raw;
+        if (b.scan) {
+          const images = []; for (const n of b.scan) images.push(await pageImage(b.pdf, n));
+          raw = await S.sample.json(pdfPrompt("(данные на изображениях страниц)", `изображения страниц ${b.scan.join(", ")} файла «${b.file}»`), {images, signal:ctl.signal, cache:false});
+        } else raw = await S.sample.json(pdfPrompt(b.text, `страницы ${b.pages.join(", ")} файла «${b.file}»`), {signal:ctl.signal, cache:false});
+        pdfValidate(raw, acc);
+      } catch(e) {
+        if (e && e.code === "cancelled") throw e;
+        if (e && ["rate_limited","not_granted","sampling_disabled"].includes(e.code)) { acc.skipped.push(`Анализ остановлен на стр. ${pg[0]}: ${e.code === "rate_limited" ? "превышен лимит запросов" : "ИИ недоступен"}`); break; }
+        acc.skipped.push(`${b.file}, стр. ${pg.join(", ")}: не удалось разобрать`);
+      }
+    }
+    S.pdf.status = `Готово: страниц ${S.pdf.pages}, полей ${Object.keys(acc.fields).length}, посевов ${acc.cultures.length}.`;
+  } catch(e) {
+    S.pdf.status = "";
+    S.pdf.err = e && e.code === "pdfjs" ? "Не удалось загрузить модуль чтения PDF: нужен доступ к cdnjs.cloudflare.com. Обновите страницу и повторите."
+      : e && e.code === "cancelled" ? "" : "Ошибка при разборе файла.";
+    if (e && e.code === "cancelled") S.pdf.status = "Разбор остановлен; ниже то, что удалось извлечь.";
+  }
+  S.pdf.busy = false; S.pdf.ctl = null;
+  S.pdf.res = (Object.keys(acc.fields).length || acc.foci.length || acc.ct.length || acc.cultures.length || acc.colonization.length) ? acc : (S.pdf.res || null);
+  if (!S.pdf.res && acc.skipped.length && !S.pdf.err) S.pdf.err = acc.skipped.join("; ");
+  render();
+}
+function applyPdf(){
+  const r = S.pdf.res, f = $("#view"); if (!r) return;
+  const on = k => { const c = f.querySelector(`[data-pk="${k}"]`); return !!(c && c.checked); };
+  for (const [k, v] of Object.entries(r.fields)) if (on("f:" + k)) S.ep[k] = v;
+  r.foci.forEach(id => { if (on("foci:" + id)) S.ep.foci = {...S.ep.foci, [id]:true}; });
+  r.ct.forEach(id => { if (on("ct:" + id)) S.ep.ct = {...S.ep.ct, [id]:true}; });
+  r.colonization.forEach(id => { if (on("col:" + id)) S.ep.colonization = {...S.ep.colonization, [id]:true}; });
+  r.cultures.forEach((c, i) => { if (on("cul:" + i)) S.ep.cultures = [...(S.ep.cultures || []), {date:c.date, src:c.src, org:c.org, phen:c.phen, note:c.note}]; });
+  if (r.fields.scr && !r.fields.crea_umol && on("f:scr")) S.ep.crea_umol = String(Math.round(num(r.fields.scr) * 88.4));
+  S.tab = "rec"; S.pdf.res = null; S.pdf.files = []; S.pdf.status = "Данные внесены в карту."; render();
+}
+function pdfHTML(){
+  const r = S.pdf.res;
+  let o = `<div class="card"><h3>Выписка или история болезни в PDF</h3>
+    <p class="snote">Из документа извлекаются данные пациента, показатели крови и гемодинамики, очаги, находки визуализации, посевы с фенотипом резистентности и назначенная схема. Всё извлечённое показывается для проверки — в карту вносится только отмеченное, затем пересчитываются шкалы и рекомендация.</p>
+    ${S.sample ? "" : `<div class="alert warn"><span class="lvl">внимание</span><b>Разбор PDF недоступен</b><p>Функции ИИ работают, когда страница открыта в Claude по ссылке claude.ai.</p></div>`}
+    <label class="drop" id="pdfdrop"><input type="file" accept="application/pdf" multiple><b>Выберите PDF-файлы</b><span class="faint">или перетащите их сюда</span></label>
+    ${S.pdf.files.length ? `<p class="snote">${S.pdf.files.map(f => esc(f.name)).join("; ")}</p>` : ""}
+    <div class="row noprint">${S.pdf.busy
+      ? `<button class="btn" data-act="pdfStop">Остановить</button>`
+      : `<button class="btn primary" data-act="pdfRun" ${S.sample && S.pdf.files.length ? "" : "disabled"}>Разобрать документ</button>`}
+      <span class="faint">${esc(S.pdf.status || "")}</span></div>
+    ${S.pdf.err ? `<div class="msg err">${esc(S.pdf.err)}</div>` : ""}
+  </div>`;
+  if (!r) return o;
+  const row = (key, label, value, checked) => `<tr><td style="width:34px"><input type="checkbox" data-pk="${key}" ${checked === false ? "" : "checked"}></td><td>${esc(label)}</td><td><b>${esc(value)}</b></td></tr>`;
+  o += `<div class="card"><h3>Что найдено</h3>${r.summary ? `<p class="snote">${esc(r.summary)}</p>` : ""}
+    <div class="scroll"><table><thead><tr><th></th><th>Поле</th><th>Значение из документа</th></tr></thead><tbody>
+    ${Object.entries(r.fields).map(([k, v]) => {
+      const def = PDF_FIELDS[k], cur = S.ep[k];
+      const shown = def[1] === "sex" ? (v === "m" ? "мужской" : "женский") : def[1] === "gm" ? ({pos:"положительный",neg:"отрицательный"})[v] || "не исследован" : v;
+      return row("f:" + k, def[0] + (cur ? ` (в карте: ${cur})` : ""), shown, !cur); }).join("")}
+    ${r.foci.map(id => row("foci:" + id, "Очаг", (FOCI.find(x => x[0] === id) || [])[1] || id)).join("")}
+    ${r.ct.map(id => row("ct:" + id, "Находка визуализации", (CT.find(x => x[0] === id) || [])[1] || id)).join("")}
+    ${r.colonization.map(id => row("col:" + id, "Резистентность в анамнезе", (PHEN.find(x => x.id === id) || {}).n || id)).join("")}
+    ${r.cultures.map((c, i) => row("cul:" + i, `Посев ${c.date || ""} ${c.src}`, `${(ORGS.find(o2 => o2.id === c.org) || {}).n || c.org} · ${(PHEN.find(o2 => o2.id === c.phen) || {}).n || c.phen}${c.note ? " · " + c.note : ""}`)).join("")}
+    </tbody></table></div>
+    ${r.skipped && r.skipped.length ? `<p class="snote">${r.skipped.map(esc).join("; ")}</p>` : ""}
+    <div class="row noprint"><button class="btn primary" data-act="pdfApply">Внести в карту и показать рекомендацию</button><button class="btn ghost" data-act="pdfDrop">Отменить</button></div>
+    <p class="disc">Текст выписки передаётся в Claude для разбора. Убедитесь, что передача таких данных согласована в вашей организации; при необходимости загружайте обезличенный документ.</p></div>`;
+  return o;
+}
+
+/* ================== ИИ ================== */
+function caseSummary(e){
+  const r = recommend(e), c = r.gfr;
+  const foci = FOCI.filter(([k]) => (e.foci || {})[k]).map(([, l]) => l).join("; ") || "не выявлены";
+  const ct = CT.filter(([k]) => (e.ct || {})[k]).map(([, l]) => l).join("; ") || "нет отмеченных находок";
+  const col = PHEN.filter(x => (e.colonization || {})[x.id]).map(x => x.n).join("; ") || "нет";
+  const cul = (e.cultures || []).map(c2 => `${c2.date || ""} ${c2.src}: ${(ORGS.find(o => o.id === c2.org) || {}).n || c2.org}, ${(PHEN.find(o => o.id === c2.phen) || {}).n || c2.phen}${c2.note ? " (" + c2.note + ")" : ""}`).join("; ") || "нет роста или не внесены";
+  return `Пациент: ${e.sex === "m" ? "мужчина" : e.sex === "f" ? "женщина" : "пол не указан"}, ${e.age || "возраст не указан"} лет, масса ${e.weight || "?"} кг, рост ${e.height || "?"} см.
+Диагноз: ${e.dx || "не указан"}; режим химиотерапии: ${e.chemo || "не указан"}.
+Нейтрофилы ${e.anc || "?"} ×10⁹/л; ожидаемая длительность нейтропении: ${e.expDuration === "long" ? "более 7 суток" : "до 7 суток"}; профилактика: ${({none:"нет",fq:"фторхинолон",azole:"азол",both:"фторхинолон и азол"})[e.prophylaxis] || "нет"}; предшествующая антибактериальная терапия: ${({none:"нет",beta:"β-лактам",carbapenem:"карбапенем",other:"другая"})[e.priorAbx] || "нет"}.
+Температура максимальная ${e.tempMax || "?"} °C; суток лихорадки на терапии: ${e.feverDays || 0}.
+Гемодинамика: АД ${e.sbp || "?"}/${e.dbp || "?"}, ЧСС ${e.hr || "?"}, ЧДД ${e.rr || "?"}, SpO₂ ${e.spo2 || "?"}%, FiO₂ ${e.fio2 || "?"}%, PaO₂ ${e.po2 || "?"}, ШКГ ${e.gcs || "?"}, лактат ${e.lactate || "?"}, вазопрессоры: норадреналин ${e.norad || 0}, адреналин ${e.adr || 0}.
+Лабораторно: тромбоциты ${e.plt || "?"}, билирубин ${e.bil || "?"}, креатинин ${creat(e).umol != null ? fN(creat(e).umol, 0) : "?"} мкмоль/л, диурез ${e.diur24 || "?"} мл/сут; ЗПТ: ${({none:"нет",hd:"гемодиализ",crrt:"ПЗПТ"})[e.rrt]}.
+СКФ по CKD-EPI: ${c ? fN(c.v, 0) + " мл/мин для доз (" + c.note + ")" : "не рассчитана"}.
+Шкалы: SOFA ${r.sofa.total} (для оценки органной дисфункции ${r.sofa.dys}: ${r.sofa.dysBasis})${r.sofa.miss.length ? " (нет данных: " + r.sofa.miss.join(", ") + ")" : ""}; qSOFA ${r.qsofa.score}/3; MASCC ${r.mascc.total}; риск: ${r.risk.t}.
+Очаги: ${foci}. Находки КТ: ${ct}. Описание исследования: ${(e.ctText || "нет").slice(0, 1500)}.
+Галактоманнан: ${({"":"не исследован",neg:"отрицательный",pos:"положительный"})[e.gm || ""]}; бета-D-глюкан: ${({"":"не исследован",neg:"отрицательный",pos:"положительный"})[e.bdg || ""]}.
+Колонизация и резистентность в анамнезе: ${col}. Посевы: ${cul}.
+Схема, предложенная приложением: ${[...r.rx, ...r.addons, ...r.fungal, ...r.viral].map(x => `${x.n} — ${x.dose}`).join("; ")}.
+Фактически назначено: ${e.regimen || "не указано"}.`;
+}
+const PROMPTS = {
+  case: e => `Ты — врач-гематолог с опытом в инфекциях у пациентов с нейтропенией и клинический фармаколог. Проверь ведение случая фебрильной нейтропении. Отвечай на русском языке.
+
+ДАННЫЕ СЛУЧАЯ
+${caseSummary(e)}
+
+ЗАДАЧА
+1. Оцени, соответствует ли предложенная схема ситуации: спектр, дозы с учётом функции почек, необходимость анти-MRSA компонента, охвата анаэробов, антимикотика.
+2. Назови, каких данных не хватает для решения (обследование, посевы, визуализация) и что сделать в ближайшие 24 часа.
+3. Укажи признаки нарастающей органной недостаточности и критерии перевода в ОРИТ для этого пациента.
+4. Опиши условия и сроки деэскалации или отмены терапии применительно к этому случаю.
+
+ФОРМАТ (Markdown, не более 450 слов)
+### Оценка схемы
+### Чего не хватает
+### Признаки ухудшения и критерии ОРИТ
+### Деэскалация
+
+ПРАВИЛА
+Опирайся только на приведённые данные, прямо говори, где их недостаточно. Не выдумывай результаты анализов. Дозы указывай только со ссылкой на функцию почек и с оговоркой сверить с инструкцией. Решение принимает лечащий врач.`,
+  ctText: e => `Ты — специалист по лучевой диагностике и инфекциям у иммунокомпрометированных пациентов. Ниже текст описания или заключения исследования у пациента с фебрильной нейтропенией. Отвечай на русском языке.
+
+ТЕКСТ
+${(e.ctText || "").slice(0, 6000)}
+
+ЗАДАЧА
+1. Перечисли находки, которые явно описаны как присутствующие (не отрицаемые).
+2. Сопоставь их с кодами из списка: ${CT.map(([k, l]) => `${k} — ${l}`).join("; ")}.
+3. Объясни клиническое значение при нейтропении и что предпринять (какие исследования, какая терапия обсуждается).
+
+ФОРМАТ (Markdown, до 300 слов)
+### Находки
+### Что это значит при нейтропении
+### Что сделать дальше
+
+ПРАВИЛА
+Только то, что есть в тексте; ничего не додумывай. Если текст не содержит описания исследования, скажи об этом одной строкой.`,
+  ctImg: e => `Ты — специалист по лучевой диагностике. На изображениях — срезы КТ или рентгенограммы пациента с фебрильной нейтропенией (${e.dx || "гемобластоз"}, нейтрофилы ${e.anc || "?"} ×10⁹/л, ${e.feverDays || 0} суток лихорадки). Отвечай на русском языке.
+
+ЗАДАЧА
+1. Опиши, что видно на изображениях: анатомическая область, модальность, основные изменения с указанием локализации.
+2. Соотнеси изменения с типичными картинами у пациентов с нейтропенией: узлы с ореолом, полости, обратный ореол, матовое стекло, консолидация, выпот, утолщение стенки кишки, деструктивный синусит.
+3. Дай дифференциальный ряд по убыванию вероятности и укажи, какие исследования уточнят диагноз.
+
+ФОРМАТ (Markdown, до 350 слов)
+### Что видно
+### Дифференциальный ряд
+### Что уточнить
+
+ПРАВИЛА
+Это вспомогательное описание, а не заключение рентгенолога: начни ответ с этой оговорки одной строкой. Если качество изображения не позволяет судить, скажи прямо. Ничего не домысливай.`,
+  audit: () => {
+    const rows = S.list.map(e => { const r = recommend(e);
+      const t2a = (e.abxStart && e.feverStart) ? Math.round((new Date(e.abxStart) - new Date(e.feverStart)) / 6e4) : null;
+      return `- ${e.dx || "диагноз не указан"}; SOFA ${r.sofa.total}; MASCC ${r.mascc.total}; риск ${r.risk.t}; очаги: ${FOCI.filter(([k]) => (e.foci || {})[k]).map(([, l]) => l.split(":")[0]).join(", ") || "нет"}; посевов ${(e.cultures || []).length}; время до антибиотика ${t2a != null ? t2a + " мин" : "не указано"}; схема: ${e.regimen || "не указана"}; исход: ${e.outcome || "не указан"}`; }).join("\n");
+    return `Ты — руководитель программы контроля антимикробной терапии. Оцени практику ведения фебрильной нейтропении по сохранённым эпизодам. Отвечай на русском языке.
+
+ЭПИЗОДЫ (${S.list.length})
+${rows.slice(0, 20000)}
+
+ЗАДАЧА
+Оцени: своевременность старта терапии (цель — 60 минут), полноту микробиологического обследования, соответствие стартовых схем риску, признаки избыточного применения анти-MRSA препаратов и антимикотиков, возможности деэскалации. Предложи 3–5 конкретных мер.
+
+ФОРМАТ (Markdown, до 400 слов)
+### Что видно по данным
+### Узкие места
+### Предложения
+
+ПРАВИЛА
+Только приведённые данные; при малом числе эпизодов прямо скажи об ограниченности выводов. Без обвинительных формулировок.`}
+};
+async function runAI(key){
+  if (!S.sample || (S.ai[key] || {}).busy) return;
+  const ctl = new AbortController();
+  S.ai[key] = {busy:true, text:"", ctl, err:""}; render();
+  try {
+    const opts = {modelTier:"complex", cache:false, signal:ctl.signal, onText:({text}) => { S.ai[key].text = text; render(); }};
+    if (key === "ctImg") {
+      const lim = await S.sample.limits().catch(() => null);
+      if (!lim || !lim.images) throw {code:"noimg"};
+      opts.images = S.imgs.slice(0, Math.min(4, lim.images.maxCount || 1)).map(x => x.blob);
+    }
+    const {text} = await S.sample(PROMPTS[key](S.ep), opts);
+    S.ai[key] = {busy:false, text, ctl:null, err:""};
+  } catch(e) {
+    const m = {cancelled:"", not_granted:"Использование ИИ не разрешено в этом просмотре.", rate_limited:"Слишком много запросов, повторите через минуту.",
+      prompt_too_large:"Слишком много данных для одного запроса.", noimg:"Анализ изображений недоступен в этом просмотре."};
+    S.ai[key] = {busy:false, text:(S.ai[key] || {}).text || "", ctl:null, err:(e && m[e.code] !== undefined) ? m[e.code] : "Не удалось получить ответ. Попробуйте ещё раз."};
+  }
+  render();
+}
+
+/* ================== события ================== */
+document.addEventListener("input", ev => {
+  const t = ev.target, k = t.dataset.k; if (!k) return;
+  if (t.type === "checkbox") { const g = t.dataset.g; if (g) { S.ep[g] = {...(S.ep[g] || {}), [k]:t.checked}; } else S.ep[k] = t.checked; }
+  else S.ep[k] = t.value;
+  if (k === "author") lsSet("fn-user", t.value);
+});
+document.addEventListener("change", ev => { const t = ev.target; if (t.dataset.k && (t.tagName === "SELECT" || t.type === "checkbox")) render(); });
+document.addEventListener("click", async ev => {
+  const j = ev.target.closest("[data-ai]"); if (j) return runAI(j.dataset.ai);
+  const st = ev.target.closest("[data-ai-stop]"); if (st) { const s = S.ai[st.dataset.aiStop]; if (s && s.ctl) s.ctl.abort(); return; }
+  const b = ev.target.closest("button"); if (!b) return;
+  if (b.dataset.tab) { S.tab = b.dataset.tab; return render(); }
+  if (b.dataset.open) { const e = S.list.find(x => x.id === b.dataset.open); if (e) { S.ep = JSON.parse(JSON.stringify(e)); if (S.ep.masccBurden === "mild") S.ep.masccBurden = "mod"; S.ai = {}; S.tab = "rec"; render(); } return; }
+  if (b.dataset.delcul != null) { S.ep.cultures.splice(Number(b.dataset.delcul), 1); return render(); }
+  if (b.dataset.delimg != null) { const i = Number(b.dataset.delimg); URL.revokeObjectURL(S.imgs[i].url); S.imgs.splice(i, 1); return render(); }
+  switch (b.dataset.act) {
+    case "toRec": S.tab = "rec"; return render();
+    case "pdfRun": return runPdf();
+    case "pdfStop": if (S.pdf.ctl) S.pdf.ctl.abort(); return;
+    case "pdfApply": return applyPdf();
+    case "pdfDrop": S.pdf.res = null; S.pdf.status = ""; return render();
+    case "new": S.ep = newEpisode(); S.ai = {}; S.tab = "assess"; return render();
+    case "print": return window.print();
+    case "addCulture": {
+      const src = $("#cSrc").value, org = $("#cOrg").value, phen = $("#cPhen").value, date = $("#cDate").value, note = $("#cNote").value.trim();
+      S.ep.cultures = [...(S.ep.cultures || []), {date, src, org, phen, note}];
+      if (phen === "mrsa") S.ep.colonization = {...S.ep.colonization, mrsa:true};
+      if (["esbl","cre","mbl","vre","crab","dtr"].includes(phen)) S.ep.colonization = {...S.ep.colonization, [phen]:true};
+      if (org === "candida") S.ep.candidemia = S.ep.candidemia || src.startsWith("Кровь");
+      if (org === "cdiff") S.ep.cdiff = true;
+      return render();
+    }
+    case "save": {
+      const msg = $("#saveMsg");
+      if (!S.ep.name) { if (msg) msg.textContent = "Укажите имя или код пациента."; else alert("Укажите имя или код пациента."); return; }
+      S.ep.savedAt = new Date().toISOString();
+      try { await S.store.put(JSON.parse(JSON.stringify(S.ep))); if (msg) { msg.className = "msg"; msg.textContent = "Эпизод сохранён."; } }
+      catch(e) { if (msg) { msg.className = "msg err"; msg.textContent = "Не удалось сохранить."; } }
+      return;
+    }
+    case "delete": {
+      if (!confirm("Удалить этот эпизод?")) return;
+      try { await S.store.del(S.ep.id); S.ep = newEpisode(); render(); } catch(e) { alert("Не удалось удалить."); }
+      return;
+    }
+    case "export": {
+      if (!S.downloads) return;
+      const r = recommend(S.ep), q = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
+      const lines = [["Раздел","Позиция","Доза/содержание"].map(q).join(";")];
+      lines.push(["Пациент", S.ep.name, `SOFA ${r.sofa.total}, MASCC ${r.mascc.total}, ${r.risk.t}`].map(q).join(";"));
+      [["Стартовая терапия", r.rx], ["Дополнения", r.addons], ["Противогрибковая терапия", r.fungal], ["Противовирусная терапия", r.viral]]
+        .forEach(([t, arr]) => arr.forEach(x => lines.push([t, x.n, x.dose].map(q).join(";"))));
+      r.source.forEach(x => lines.push(["Диагностика", "", x].map(q).join(";")));
+      r.deesc.forEach(x => lines.push(["Деэскалация", "", x].map(q).join(";")));
+      r.monitor.forEach(x => lines.push(["Мониторинг", "", x].map(q).join(";")));
+      try { await S.downloads.save({filename:`ФН — ${S.ep.name || "случай"}.csv`, data:"\uFEFF" + lines.join("\r\n")}); } catch(e) {}
+      return;
+    }
+  }
+});
+document.addEventListener("change", ev => {
+  const inp = ev.target;
+  if (inp.type === "file" && inp.closest("#pdfdrop")) {
+    S.pdf.files = [...inp.files].filter(f => f.type === "application/pdf" || /\.pdf$/i.test(f.name));
+    S.pdf.err = ""; return render();
+  }
+  if (inp.type === "file" && inp.closest("#drop")) {
+    for (const f of inp.files) if (/^image\//.test(f.type)) S.imgs.push({blob:f, url:URL.createObjectURL(f)});
+    render();
+  }
+});
+document.addEventListener("dragover", ev => { const d = ev.target.closest("#drop, #pdfdrop"); if (d) { ev.preventDefault(); d.classList.add("over"); } });
+document.addEventListener("drop", ev => {
+  const pd = ev.target.closest("#pdfdrop");
+  if (pd) { ev.preventDefault(); pd.classList.remove("over"); S.pdf.files = [...ev.dataTransfer.files].filter(f => f.type === "application/pdf" || /\.pdf$/i.test(f.name)); S.pdf.err = ""; return render(); }
+  const d = ev.target.closest("#drop"); if (!d) return;
+  ev.preventDefault(); d.classList.remove("over");
+  for (const f of ev.dataTransfer.files) if (/^image\//.test(f.type)) S.imgs.push({blob:f, url:URL.createObjectURL(f)});
+  render();
+});
+
+/* ================== запуск ================== */
+render();
+(async () => {
+  let db = null;
+  if (window.claude && typeof window.claude.use === "function") {
+    const [a, b, c] = await Promise.all([
+      window.claude.use("db").catch(() => null),
+      window.claude.use("sample").catch(() => null),
+      window.claude.use("downloads").catch(() => null)]);
+    db = a; S.sample = b; S.downloads = c;
+  }
+  S.store = db ? Remote(db) : Local();
+  $("#mode").innerHTML = db ? `<i class="dot live"></i><span>общая база отделения</span>` : `<i class="dot local"></i><span>только этот браузер</span>`;
+  S.store.listen(list => { S.list = list; render(); }, () => {});
+  render();
+})();
+</script>
+</body>
+</html>

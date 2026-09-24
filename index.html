@@ -994,6 +994,9 @@ function scaleCtx(p, entries){
   const im = indMap(p), sorted = sortAsc(entries);
   const T = sorted.length ? dataT(sorted) : Date.now();
   const st = stateAt(sorted, T, im), w = Number(p?.weight), h = Number(p?.height), age = ageOf(p?.birth);
+  /* СКФ — по последнему креатинину за 7 суток (а не только за 72 ч, как для текущих значений): функция почек нужна и при редких анализах */
+  const creaS = seriesOf(sorted, "crea", T - 7 * 24 * H, T), gfrCrea = creaS.length ? creaS[creaS.length - 1] : null;
+  const gfrNeed = [!gfrCrea && "креатинин за последние 7 суток", age === "" && "дата рождения", !p?.sex && "пол"].filter(Boolean);
   const flags = new Set();
   for (const k of ["caprini", "padua", "improve", "improvevte", "hasbled"]) { const ls = latestScale(entries, k); if (ls) for (const [id, on] of Object.entries(ls.items || {})) if (on) flags.add(id); }
   /* SOFA по четырём системам нужен для SIC, APACHE II — для тяжести заболевания в NRS-2002 */
@@ -1005,7 +1008,7 @@ function scaleCtx(p, entries){
   if (pltS.length >= 2) { const last = pltS[pltS.length - 1], mx = pltS.slice(0, -1).reduce((m, x) => x.v > m.v ? x : m);
     plt = {last:last.v, max:mx.v, dropPct:mx.v > 0 ? (1 - last.v / mx.v) * 100 : 0}; }
   return {dx:p?.dx || "", age, sex:p?.sex || "", bmi:w && h ? w / Math.pow(h / 100, 2) : null, v:c => st[c]?.v,
-    gfr:egfr(st.crea?.v, age, p?.sex), icu:!!p?.icuAt || /ОРИТ|ОАРИТ|реанимац|интенсивн/i.test(p?.ward || ""), flag:id => flags.has(id),
+    gfr:egfr(gfrCrea ? Number(gfrCrea.v) : null, age, p?.sex), gfrCrea, gfrNeed, icu:!!p?.icuAt || /ОРИТ|ОАРИТ|реанимац|интенсивн/i.test(p?.ward || ""), flag:id => flags.has(id),
     plt, sofa4, apache:ap ? ap.total : null, sorted, im, T};
 }
 const errW = n => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? "ошибка" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "ошибки" : "ошибок"; };
@@ -1687,9 +1690,14 @@ function openScaleDialog(key){
         `<label class="rb"><input type="radio" name="${it.id}" value="${vs[k]}" ${Number(items[it.id]) === vs[k] ? "checked" : ""}> ${vs[k]} — ${esc(o)}</label>`).join("")}</div></fieldset>`; }).join("");
   } else if (sc.kind === "check") {
     if (!last) for (const it of sc.items) if (it.auto && it.auto(ctx)) items[it.id] = true;
+    /* Пункты о функции почек — объективные данные: при повторной оценке они берутся по текущей СКФ, а не из прошлой оценки */
+    let gfrUpd = false;
+    if (last && ctx.gfr != null) for (const it of sc.items) if (it.excl === "gfr" && it.auto) { const a = !!it.auto(ctx); if (!!items[it.id] !== a) { items[it.id] = a; gfrUpd = true; } }
     const ageP = sc.ageFn ? sc.ageFn(ctx.age) : 0;
     intro += " Пункты с пометкой «по данным карты» отмечены по диагнозу, анализам, данным мониторинга и другим шкалам — проверьте их.";
-    if (key === "improve") intro += ctx.gfr != null ? ` Расчётная СКФ: ${fNum(ctx.gfr, 0)} мл/мин/1,73 м².` : " СКФ не рассчитана: нужны креатинин, возраст и пол.";
+    if (key === "improve") intro += ctx.gfr != null
+      ? ` Расчётная СКФ (CKD-EPI 2021): ${fNum(ctx.gfr, 0)} мл/мин/1,73 м² по креатинину ${fNum(Number(ctx.gfrCrea.v), 0)} мкмоль/л от ${fDT(ctx.gfrCrea.t)}.${gfrUpd ? " Пункты о почечной недостаточности обновлены по этому значению: в прошлой оценке они были другими." : ""}`
+      : ` СКФ не рассчитана: нет данных — ${ctx.gfrNeed.join(", ")}.`;
     body = (sc.ageFn ? `<div class="cb auto"><span>Возраст: ${ctx.age !== "" ? ctx.age + " " + yearsWord(ctx.age) : "не указан в карточке"} <span class="autotag">рассчитано автоматически</span></span><span class="pts">+${fNum(ageP)}</span></div>` : "")
       + sc.items.map(it => { const a = it.auto && it.auto(ctx);
         return `<label class="cb"><input type="checkbox" name="${it.id}" ${it.excl ? `data-excl="${it.excl}"` : ""} ${items[it.id] ? "checked" : ""}><span>${esc(it.name)}${a ? ` <span class="autotag">по данным карты</span>` : ""}</span><span class="pts">+${fNum(it.pts)}</span></label>`; }).join("");

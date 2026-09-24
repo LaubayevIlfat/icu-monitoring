@@ -172,7 +172,8 @@ tbody tr:hover{background:var(--field)}
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-const num = v => { const n = Number(String(v ?? "").replace(",", ".")); return Number.isFinite(n) ? n : null; };
+/* пустое поле — «нет данных», а не ноль: иначе незаполненные ШКГ, диурез и АД дают баллы SOFA и признаки шока */
+const num = v => { const s = String(v ?? "").trim().replace(",", "."); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : null; };
 const fN = (v, d) => v == null ? "—" : Number(v).toLocaleString("ru-RU", {maximumFractionDigits: d ?? 1});
 const pad2 = n => String(n).padStart(2, "0");
 const nowLocal = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
@@ -307,7 +308,12 @@ function sofa(p){
     parts.renal = {p:pr, s:s.join(", ")};
   } else miss.push("почки");
   const total = Object.values(parts).reduce((a, x) => a + x.p, 0);
-  return {total, parts, miss};
+  /* Тромбоцитопения после химиотерапии ожидаема и сама по себе не означает сепсис:
+     органную дисфункцию считаем по приросту к исходному SOFA, а без него — без коагуляционного компонента. */
+  const base = num(p.sofaBase), coag = parts.coag ? parts.coag.p : 0;
+  const dys = base != null ? Math.max(0, total - base) : total - coag;
+  const dysBasis = base != null ? `прирост к исходному SOFA ${base}` : coag ? "без коагуляционного компонента: исходный SOFA не указан, тромбоцитопения ожидаема после химиотерапии" : "исходный SOFA не указан и принят за 0";
+  return {total, parts, miss, base, dys, dysBasis};
 }
 function qsofa(p){
   const map = (num(p.sbp) != null && num(p.dbp) != null) ? (num(p.sbp) + 2 * num(p.dbp)) / 3 : null;
@@ -316,7 +322,7 @@ function qsofa(p){
 }
 function mascc(p){
   const it = [
-    ["burden", p.masccBurden === "none" ? 5 : p.masccBurden === "mild" ? 5 : p.masccBurden === "mod" ? 3 : 0, "Тяжесть симптомов"],
+    ["burden", p.masccBurden === "none" ? 5 : (p.masccBurden === "mod" || p.masccBurden === "mild") ? 3 : 0, "Тяжесть симптомов"], /* "mild" — прежнее значение пункта «умеренные симптомы» */
     ["hypo", p.sbp && num(p.sbp) < 90 ? 0 : 5, "Нет гипотензии (САД ≥ 90)"],
     ["copd", p.copd ? 0 : 4, "Нет ХОБЛ"],
     ["tumor", p.solidOrNoFungal ? 4 : 0, "Солидная опухоль или нет грибковой инфекции в анамнезе"],
@@ -354,12 +360,27 @@ function recommend(p){
   else if (sh.suspected) out.flags.push({lvl:"crit", t:"Гемодинамическая нестабильность и/или гиперлактатемия",
     d:"Рассматривать как сепсис высокого риска: расширенный охват с первой дозы, инфузионная нагрузка, мониторинг в условиях ОРИТ."});
 
-  if (so.total >= 2) out.flags.push({lvl: so.total >= 6 ? "crit" : "warn", t:`SOFA = ${so.total} — органная дисфункция`,
-    d:`Компоненты: ${Object.entries(so.parts).map(([k,v]) => `${({resp:"дыхание",coag:"коагуляция",liver:"печень",cv:"гемодинамика",cns:"ЦНС",renal:"почки"})[k]} ${v.p}`).join(", ")}. Прирост SOFA ≥ 2 от исходного при инфекции соответствует критериям сепсиса (Sepsis-3). ${so.miss.length ? "Нет данных: " + so.miss.join(", ") + "." : ""}`});
+  const sofaParts = `Компоненты: ${Object.entries(so.parts).map(([k,v]) => `${({resp:"дыхание",coag:"коагуляция",liver:"печень",cv:"гемодинамика",cns:"ЦНС",renal:"почки"})[k]} ${v.p}`).join(", ")}.${so.miss.length ? " Нет данных: " + so.miss.join(", ") + "." : ""}`;
+  if (so.dys >= 2) out.flags.push({lvl: so.dys >= 6 ? "crit" : "warn", t:`Органная дисфункция: SOFA ${so.total}, в расчёт риска — ${so.dys}`,
+    d:`${sofaParts} Оценка ${so.dysBasis}. Прирост SOFA ≥ 2 от исходного при инфекции соответствует критериям сепсиса (Sepsis-3).`});
+  else if (so.total >= 2) out.flags.push({lvl:"info", t:`SOFA ${so.total} — в основном за счёт тромбоцитопении`,
+    d:`${sofaParts} Органная дисфункция не засчитана: оценка ${so.dysBasis}. Если тромбоцитопения не связана с химиотерапией, укажите исходный SOFA.`});
   if (q.score >= 2) out.flags.push({lvl:"warn", t:`qSOFA ${q.score}/3`, d:"Высокий риск неблагоприятного исхода: оценить перевод в ОРИТ, лактат, посевы, раннюю эскалацию."});
 
-  out.risk = sh.suspected || so.total >= 2 || prolonged || p.comorbid || !ms.low
-    ? {cls:"high", t:"Высокий риск", d:`MASCC ${ms.total} балл(ов)${ms.low ? " (формально низкий риск)" : ""}; ${sh.suspected ? "нестабильная гемодинамика; " : ""}${so.total >= 2 ? "органная дисфункция; " : ""}${prolonged ? "ожидаемая длительная нейтропения; " : ""}${p.comorbid ? "значимая сопутствующая патология; " : ""}стационарное лечение, внутривенная терапия.`}
+  const fo = p.foci || {}, im = p.ct || {}, riskWhy = [];
+  if (sh.suspected) riskWhy.push("нестабильная гемодинамика");
+  if (so.dys >= 2) riskWhy.push("органная дисфункция");
+  if (prolonged) riskWhy.push("ожидаемая длительная нейтропения");
+  if (p.comorbid) riskWhy.push("значимая сопутствующая патология");
+  if (fo.resp || im.consol) riskWhy.push("пневмония или респираторный очаг");
+  if (fo.cvc) riskWhy.push("инфекция ЦВК");
+  if (fo.cns) riskWhy.push("неврологическая симптоматика");
+  if (fo.gi || fo.perianal || im.typhl) riskWhy.push("абдоминальный или перианальный очаг");
+  if (p.rrt && p.rrt !== "none") riskWhy.push("заместительная почечная терапия");
+  else if (c && c.v < 30) riskWhy.push("клиренс креатинина < 30 мл/мин");
+  if (!ms.low) riskWhy.push("MASCC < 21");
+  out.risk = riskWhy.length
+    ? {cls:"high", t:"Высокий риск", d:`MASCC ${ms.total} балл(ов)${ms.low ? " (формально низкий риск)" : ""}; ${riskWhy.join("; ")}; стационарное лечение, внутривенная терапия.`}
     : {cls:"low", t:"Низкий риск", d:`MASCC ${ms.total} балл(ов), нейтропения ожидается короткой, органной дисфункции нет. Возможна пероральная терапия (ципрофлоксацин + амоксициллин/клавуланат) и амбулаторное ведение при обеспеченном наблюдении, связи и возможности вернуться в стационар. Не применимо при профилактике фторхинолоном, мукозите III–IV степени, рвоте, ОМЛ/ТГСК в активной фазе.`};
 
   /* выбор базового препарата */
@@ -442,7 +463,7 @@ function planSteps(p, r){
   const D = k => { const x = doseOf(k, p); return `${x.n} — ${x.dose}`; };
   const isCarba = ["meropenem","imipenem"].includes(r.baseKey);
   const isNew = ["czataz","ceftol","cefiderocol"].includes(r.baseKey);
-  const unstable = r.shock.suspected || r.sofa.total >= 2;
+  const unstable = r.shock.suspected || r.sofa.dys >= 2;
   const line1 = [...r.rx, ...r.addons].map(x => `${x.n} — ${x.dose}`);
   const line2 = [];
   if (isNew) line2.push(`сохранить ${DRUGS[r.baseKey].n} и добавить второй активный препарат по чувствительности (аминогликозид, полимиксин B или азтреонам) — решение с клиническим фармакологом`);
@@ -493,8 +514,8 @@ function newEpisode(){
   return {id:rid(), createdAt:new Date().toISOString(), author:lsGet("fn-user") || "", name:"", card:"", age:"", sex:"", weight:"", height:"", scr:"",
     dx:"", chemo:"", neutroStart:"", anc:"", ancFalling:false, expDuration:"short", prophylaxis:"none", priorAbx:"none", comorbid:false, copd:false,
     tempMax:"", tempSustained:false, feverStart:nowLocal(), feverDays:0, sbp:"", dbp:"", hr:"", rr:"", spo2:"", fio2:"", po2:"", gcs:"", lactate:"",
-    plt:"", bil:"", crea_umol:"", diur24:"", norad:"", adr:"", dopa:"", dobu:"", vent:"0", rrt:"none",
-    masccBurden:"mild", dehydration:false, outpatient:false, solidOrNoFungal:false,
+    plt:"", bil:"", crea_umol:"", sofaBase:"", diur24:"", norad:"", adr:"", dopa:"", dobu:"", vent:"0", rrt:"none",
+    masccBurden:"mod", dehydration:false, outpatient:false, solidOrNoFungal:false,
     foci:{}, ct:{}, ctText:"", ctAi:"", colonization:{}, cultures:[], gm:"", bdg:"", gramPosBlood:false, candidemia:false, cdiff:false, hsv:false,
     abxStart:"", regimen:"", outcome:"", note:""};
 }
@@ -565,10 +586,11 @@ function assessHTML(){
     ${F("Шкала Глазго", "gcs")}${F("Лактат, ммоль/л", "lactate")}
     ${F("Тромбоциты, ×10⁹/л", "plt")}${F("Билирубин, мкмоль/л", "bil")}${F("Диурез, мл/сут", "diur24")}
     ${F("Норадреналин, мкг/кг/мин", "norad")}${F("Адреналин, мкг/кг/мин", "adr")}${F("Дофамин, мкг/кг/мин", "dopa")}${F("Добутамин, мкг/кг/мин", "dobu")}
-  </div></div>
+    ${F("Исходный SOFA до эпизода", "sofaBase")}
+  </div><p class="snote">Незаполненные поля в SOFA не учитываются и перечисляются как «нет данных». Исходный SOFA — оценка до лихорадки (например, стойкая тромбоцитопения после курса). Если он не указан, органная дисфункция считается без коагуляционного компонента.</p></div>
 
   <div class="card"><h3>Шкала MASCC (риск осложнений)</h3><div class="grid">
-    ${F("Тяжесть симптомов", "masccBurden", "sel", [["none","симптомов нет или они минимальны (5)"],["mild","умеренные симптомы (3)"],["sev","тяжёлые симптомы (0)"]])}
+    ${F("Тяжесть симптомов", "masccBurden", "sel", [["none","симптомов нет или они минимальны (5)"],["mod","умеренные симптомы (3)"],["sev","тяжёлые симптомы (0)"]])}
   </div><div class="cols">
     ${CB("Обезвоживание, требующее инфузионной терапии", "dehydration")}
     ${CB("Амбулаторный статус на момент лихорадки", "outpatient")}
@@ -597,10 +619,10 @@ function recHTML(){
   const p = S.ep, r = recommend(p), so = r.sofa, ms = r.mascc, c = r.crcl;
   let o = `<div class="tiles">
     ${tile("Фебрильная нейтропения", r.fn ? "да" : "нет", r.fn ? "критерии выполнены" : "критерии не выполнены", r.fn ? "crit" : "")}
-    ${tile("SOFA", so.total, so.miss.length ? "нет данных: " + so.miss.join(", ") : "по внесённым данным", so.total >= 6 ? "crit" : so.total >= 2 ? "warn" : "ok")}
+    ${tile("SOFA", so.total, (so.base != null ? `прирост ${so.dys}` : so.parts.coag && so.parts.coag.p ? `без коагуляции ${so.dys}` : "по внесённым данным") + (so.miss.length ? "; нет данных: " + so.miss.join(", ") : ""), so.dys >= 6 ? "crit" : so.dys >= 2 ? "warn" : "ok")}
     ${tile("qSOFA", r.qsofa.score + "/3", r.qsofa.map != null ? `ср. АД ${fN(r.qsofa.map,0)}` : "", r.qsofa.score >= 2 ? "crit" : "ok")}
     ${tile("MASCC", ms.total, ms.low ? "≥ 21 — низкий риск" : "< 21 — высокий риск", ms.low ? "ok" : "warn")}
-    ${tile("Лактат", fN(num(p.lactate), 1), "ммоль/л", num(p.lactate) >= 4 ? "crit" : num(p.lactate) > 2 ? "warn" : "ok")}
+    ${tile("Лактат", fN(num(p.lactate), 1), num(p.lactate) == null ? "нет данных" : "ммоль/л", num(p.lactate) == null ? "" : num(p.lactate) >= 4 ? "crit" : num(p.lactate) > 2 ? "warn" : "ok")}
     ${tile("Клиренс креатинина", c ? fN(c.v, 0) : "—", c ? c.note : "нужны возраст, пол, масса, креатинин", c && c.v < 30 ? "crit" : c && c.v < 60 ? "warn" : "ok")}
     ${tile("Риск", r.risk.cls === "high" ? "высокий" : "низкий", "", r.risk.cls === "high" ? "warn" : "ok")}
   </div>`;
@@ -1014,7 +1036,7 @@ function caseSummary(e){
 Гемодинамика: АД ${e.sbp || "?"}/${e.dbp || "?"}, ЧСС ${e.hr || "?"}, ЧДД ${e.rr || "?"}, SpO₂ ${e.spo2 || "?"}%, FiO₂ ${e.fio2 || "?"}%, PaO₂ ${e.po2 || "?"}, ШКГ ${e.gcs || "?"}, лактат ${e.lactate || "?"}, вазопрессоры: норадреналин ${e.norad || 0}, адреналин ${e.adr || 0}.
 Лабораторно: тромбоциты ${e.plt || "?"}, билирубин ${e.bil || "?"}, креатинин ${e.crea_umol || "?"} мкмоль/л, диурез ${e.diur24 || "?"} мл/сут; ЗПТ: ${({none:"нет",hd:"гемодиализ",crrt:"ПЗПТ"})[e.rrt]}.
 Расчётный клиренс креатинина: ${c ? fN(c.v, 0) + " мл/мин (" + c.note + ")" : "не рассчитан"}.
-Шкалы: SOFA ${r.sofa.total}${r.sofa.miss.length ? " (нет данных: " + r.sofa.miss.join(", ") + ")" : ""}; qSOFA ${r.qsofa.score}/3; MASCC ${r.mascc.total}; риск: ${r.risk.t}.
+Шкалы: SOFA ${r.sofa.total} (для оценки органной дисфункции ${r.sofa.dys}: ${r.sofa.dysBasis})${r.sofa.miss.length ? " (нет данных: " + r.sofa.miss.join(", ") + ")" : ""}; qSOFA ${r.qsofa.score}/3; MASCC ${r.mascc.total}; риск: ${r.risk.t}.
 Очаги: ${foci}. Находки КТ: ${ct}. Описание исследования: ${(e.ctText || "нет").slice(0, 1500)}.
 Галактоманнан: ${({"":"не исследован",neg:"отрицательный",pos:"положительный"})[e.gm || ""]}; бета-D-глюкан: ${({"":"не исследован",neg:"отрицательный",pos:"положительный"})[e.bdg || ""]}.
 Колонизация и резистентность в анамнезе: ${col}. Посевы: ${cul}.
@@ -1126,7 +1148,7 @@ document.addEventListener("click", async ev => {
   const st = ev.target.closest("[data-ai-stop]"); if (st) { const s = S.ai[st.dataset.aiStop]; if (s && s.ctl) s.ctl.abort(); return; }
   const b = ev.target.closest("button"); if (!b) return;
   if (b.dataset.tab) { S.tab = b.dataset.tab; return render(); }
-  if (b.dataset.open) { const e = S.list.find(x => x.id === b.dataset.open); if (e) { S.ep = JSON.parse(JSON.stringify(e)); S.ai = {}; S.tab = "rec"; render(); } return; }
+  if (b.dataset.open) { const e = S.list.find(x => x.id === b.dataset.open); if (e) { S.ep = JSON.parse(JSON.stringify(e)); if (S.ep.masccBurden === "mild") S.ep.masccBurden = "mod"; S.ai = {}; S.tab = "rec"; render(); } return; }
   if (b.dataset.delcul != null) { S.ep.cultures.splice(Number(b.dataset.delcul), 1); return render(); }
   if (b.dataset.delimg != null) { const i = Number(b.dataset.delimg); URL.revokeObjectURL(S.imgs[i].url); S.imgs.splice(i, 1); return render(); }
   switch (b.dataset.act) {

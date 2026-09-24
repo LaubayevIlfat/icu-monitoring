@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Хроническая боль в онкогематологии — поддержка решений</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== Тема «Шкала боли»: прохладный фон, индиго, градиент тяжести ===== */
+:root{
+  --paper:#F1F5F9; --sheet:#FFFFFF; --ink:#0F172A; --ink-2:#475569; --ink-3:#8494A8;
+  --line:#DCE5EF; --line-2:#EEF3F8; --field:#F7FAFC;
+  --indigo:#4F46E5; --indigo-soft:#E8E7FD; --teal:#0D9488; --teal-soft:#D8F3EF;
+  --green:#10B981; --green-soft:#E3FAF0; --amber:#F59E0B; --amber-soft:#FEF4E2; --rose:#EF4444; --rose-soft:#FEE9E9;
+  --plum:#7C3AED; --plum-soft:#EFE9FE;
+  --grad:linear-gradient(90deg,#10B981 0%,#84CC16 25%,#F59E0B 55%,#F97316 78%,#EF4444 100%);
+  --shadow:0 1px 3px rgba(15,23,42,.06), 0 12px 28px -18px rgba(15,23,42,.35);
+  --r:20px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0B1220; --sheet:#111C2E; --ink:#E8EEF7; --ink-2:#A8B8CC; --ink-3:#74879E;
+  --line:#22324A; --line-2:#182740; --field:#0E1A2B;
+  --indigo:#A5B4FC; --indigo-soft:#1E2450; --teal:#5EEAD4; --teal-soft:#0D3B37;
+  --green:#34D399; --green-soft:#0E3226; --amber:#FBBF24; --amber-soft:#34280B; --rose:#FB7185; --rose-soft:#3A1520;
+  --plum:#C4B5FD; --plum-soft:#251C45;
+  --shadow:0 1px 3px rgba(0,0,0,.5), 0 14px 30px -20px rgba(0,0,0,.9);}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3,h4,.rxn,.tv,.top b{font-family:Manrope,Inter,system-ui,sans-serif;font-weight:700;letter-spacing:-.015em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.muted{color:var(--ink-2)}.faint{color:var(--ink-3)}
+
+.top{background:var(--sheet);padding:16px 22px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);position:relative}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:4px;background:var(--grad)}
+.top b{font-size:21px}
+.top .sub{color:var(--ink-3);font-size:14px}
+.top .grow{flex:1}
+.mode{font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:7px;background:var(--field);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3)}.dot.live{background:var(--green)}.dot.local{background:var(--amber)}
+.wrap{max-width:1160px;margin:0 auto;padding:22px 18px 60px}
+
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px;background:var(--sheet);border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:var(--shadow);counter-reset:step}
+.tab{counter-increment:step;border:0;background:transparent;border-radius:999px;padding:9px 16px;cursor:pointer;color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:8px}
+.tab::before{content:counter(step);display:grid;place-items:center;width:21px;height:21px;border-radius:50%;background:var(--line-2);font-size:12px;font-weight:700;color:var(--ink-2)}
+.tab:hover{background:var(--line-2);color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--indigo);color:#fff}
+.tab[aria-selected="true"]::before{background:rgba(255,255,255,.25);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tab[aria-selected="true"]{color:#0B1220}
+ :root:not([data-theme="light"]) .tab[aria-selected="true"]::before{background:rgba(0,0,0,.2);color:#0B1220}}
+
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 14px;font-size:18px;display:flex;align-items:center;gap:10px}
+.card h3::before{content:"";width:6px;height:20px;border-radius:3px;background:var(--indigo)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink-2);font-weight:500}
+label.f input,label.f select,label.f textarea{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:15.5px;width:100%}
+label.f input:focus,label.f select:focus,label.f textarea:focus{background:var(--sheet);border-color:var(--indigo)}
+label.f textarea{min-height:80px;resize:vertical}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;font-size:15px;cursor:pointer;border-radius:12px}
+.chk:hover{background:var(--line-2)}
+.chk input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--indigo)}
+.cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:2px 16px}
+.btn{border:1px solid var(--line);background:var(--sheet);border-radius:14px;padding:10px 18px;cursor:pointer;white-space:nowrap;font-weight:600}
+.btn:hover{border-color:var(--indigo);color:var(--indigo)}
+.btn.primary{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#0B1220}}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.danger{color:var(--rose)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(164px,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--line)}
+.tile .tl{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.tile .tv{font-size:32px;line-height:1.15;margin-top:2px}
+.tile .ts{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.tile.ok::before{background:var(--green)}.tile.ok .tv{color:var(--green)}
+.tile.warn::before{background:var(--amber)}.tile.warn .tv{color:var(--amber)}
+.tile.crit::before{background:var(--rose)}.tile.crit .tv{color:var(--rose)}
+
+.alert{border:1px solid var(--line);border-radius:16px;padding:14px 18px 14px 20px;margin-bottom:10px;box-shadow:var(--shadow);position:relative;background:var(--sheet);overflow:hidden}
+.alert::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--indigo)}
+.alert.crit{background:var(--rose-soft)}.alert.crit::before{background:var(--rose)}
+.alert.warn{background:var(--amber-soft)}.alert.warn::before{background:var(--amber)}
+.alert.ok{background:var(--green-soft)}.alert.ok::before{background:var(--green)}
+.alert b{font-family:Manrope,sans-serif;font-size:16.5px}
+.alert p{margin:6px 0 0;color:var(--ink-2);font-size:15px;max-width:86ch}
+.lvl{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 10px;background:var(--indigo);color:#fff;margin-right:10px}
+.alert.crit .lvl{background:var(--rose)}.alert.warn .lvl{background:var(--amber);color:#3B2503}.alert.ok .lvl{background:var(--green)}
+
+.rx{border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:12px;background:var(--sheet);box-shadow:var(--shadow)}
+.rx .rxh{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.rx .rxn{font-size:18px}
+.rx .dose{background:var(--indigo-soft);color:var(--indigo);border-radius:12px;padding:5px 12px;font-weight:700;font-size:15px}
+.rx .why{font-size:14.5px;color:var(--ink-2);margin-top:10px;max-width:86ch}
+.rx .alt{font-size:13.5px;color:var(--ink-3);margin-top:6px;padding-left:12px;border-left:2px solid var(--line)}
+
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);background:var(--line-2);padding:10px 12px}
+td{padding:10px 12px;border-top:1px solid var(--line-2);vertical-align:top}
+tbody tr:hover{background:var(--field)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+.sec{font-size:21px;margin:30px 0 14px;display:flex;align-items:center;gap:12px}
+.sec::after{content:"";flex:1;height:3px;border-radius:2px;background:var(--grad);opacity:.35}
+.snote{font-size:14px;color:var(--ink-2)}
+.disc{font-size:13px;color:var(--ink-3);margin-top:14px;max-width:92ch}
+
+.plan{position:relative;padding-left:28px}
+.plan::before{content:"";position:absolute;left:9px;top:8px;bottom:12px;width:3px;border-radius:2px;background:var(--grad);opacity:.5}
+.step{position:relative;background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.step::before{content:"";position:absolute;left:-25px;top:22px;width:13px;height:13px;border-radius:50%;background:var(--indigo);border:3px solid var(--paper)}
+.step.later::before{background:var(--plum)}
+.step .when{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--indigo);background:var(--indigo-soft);border-radius:999px;padding:3px 11px;margin-bottom:6px}
+.step.later .when{color:var(--plum);background:var(--plum-soft)}
+.step h4{margin:4px 0 8px;font-size:17.5px}
+.step ul{margin:6px 0;padding-left:20px}.step li{margin:5px 0}
+.branch{display:grid;grid-template-columns:minmax(180px,1fr) 2fr;gap:6px 16px;padding:10px 0;border-top:1px solid var(--line-2);font-size:14.5px}
+.branch .cond{font-weight:600}.branch .then{color:var(--ink-2)}
+@media (max-width:640px){.branch{grid-template-columns:1fr;gap:2px}}
+
+.nrs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.nrs button{width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:var(--sheet);cursor:pointer;font-weight:700;font-family:Manrope,sans-serif;font-size:16px;transition:transform .08s}
+.nrs button:hover{transform:translateY(-2px);border-color:var(--indigo)}
+.nrs button[aria-pressed="true"]{color:#fff;border-color:transparent;box-shadow:0 6px 14px -8px rgba(15,23,42,.8)}
+.nrs button.g[aria-pressed="true"]{background:var(--green)}
+.nrs button.y[aria-pressed="true"]{background:var(--amber);color:#3B2503}
+.nrs button.r[aria-pressed="true"]{background:var(--rose)}
+.scale-legend{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-3);max-width:540px;margin-top:6px}
+.face{font-size:24px;margin-right:6px}
+
+.ai{border:1px solid var(--line);border-radius:20px;padding:18px 20px;background:var(--plum-soft);box-shadow:var(--shadow)}
+.aitext{max-width:86ch;font-size:15.5px}.aitext h4{font-size:16.5px;margin:16px 0 4px}
+.aitext p{margin:8px 0}.aitext ul,.aitext ol{margin:8px 0;padding-left:24px}
+.thinking{color:var(--ink-3);font-style:italic}
+.epi{width:100%;text-align:left;border:1px solid var(--line);background:var(--sheet);border-radius:16px;padding:13px 16px;margin-bottom:8px;cursor:pointer;box-shadow:var(--shadow)}
+.epi:hover{border-color:var(--indigo)}
+.epi[aria-current="true"]{border-color:var(--indigo);background:var(--indigo-soft)}
+.msg{font-size:14.5px}.msg.err{color:var(--rose)}
+svg.chart{width:100%;height:auto;display:block}
+@media (max-width:700px){.wrap{padding:14px 12px 40px}.top .sub{display:none}.card{padding:16px}.tabs{border-radius:18px}}
+@media print{.top::after{display:none}.tabs,.row.noprint{display:none!important}body{background:#fff}.card,.rx,.alert,.step,.tile{box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <b>Хроническая боль в онкогематологии</b><span class="sub">оценка, схема обезболивания, взаимодействия</span>
+  <span class="grow"></span>
+  <div class="mode" id="mode"><i class="dot"></i><span>подключение…</span></div>
+</header>
+<div class="wrap"><div class="tabs" role="tablist" id="tabs"></div><div id="view"></div>
+<p class="disc">Инструмент поддержки решений: не заменяет осмотр, локальный протокол и инструкцию к препарату. Дозы и предостережения адаптированы из таблицы UpToDate по НПВП и парацетамолу (2024), рекомендаций ESMO и NCCN по боли в онкологии, EAPC по опиоидной терапии и инструкций производителей. Опиоидные анальгетики назначаются с соблюдением правил учёта, принятых в вашей стране.</p></div>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+/* пустое поле — «нет данных», а не ноль: иначе пустые тромбоциты запрещают НПВП, а пустой креатинин даёт бесконечную СКФ */
+const num = v => { const s = String(v ?? "").trim().replace(",", "."); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : null; };
+const fN = (v, d) => v == null ? "—" : Number(v).toLocaleString("ru-RU", {maximumFractionDigits: d ?? 1});
+const pad2 = n => String(n).padStart(2, "0");
+const nowLocal = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const fDT = s => { if (!s) return "—"; const d = new Date(s); return `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} };
+
+/* ===================== справочники ===================== */
+const PAIN_TYPES = [
+  ["nocic", "Ноцицептивная соматическая (мышцы, мягкие ткани, послеоперационная)"],
+  ["bone", "Костная: метастазы, миеломные очаги, компрессионные переломы"],
+  ["visc", "Висцеральная: гепатоспленомегалия, инфильтрация органов, обструкция"],
+  ["neuro", "Невропатическая: полинейропатия после химиотерапии, компрессия корешка, постгерпетическая невралгия"],
+  ["muco", "Мукозит полости рта и глотки"],
+  ["proc", "Процедурная: пункции, биопсии, перевязки"],
+  ["head", "Головная боль: после люмбальной пункции, интратекальной терапии"]
+];
+const RED_FLAGS = [
+  ["cord", "Боль в спине с онемением, слабостью в ногах, задержкой мочи — подозрение на компрессию спинного мозга"],
+  ["fract", "Внезапная резкая боль в кости после минимальной травмы — патологический перелом"],
+  ["infect", "Боль с лихорадкой и локальным воспалением — инфекция, в том числе на фоне нейтропении"],
+  ["svc", "Отёк лица и шеи, расширение вен — синдром верхней полой вены"],
+  ["rapid", "Быстрое нарастание боли за несколько дней при прежней стабильной терапии"],
+  ["crisis", "Некупируемая боль, требующая неотложной помощи (болевой криз)"]
+];
+const COMEDS = [
+  ["azole", "Азолы (вориконазол, позаконазол, итраконазол) — ингибиторы CYP3A4"],
+  ["ssri", "Антидепрессанты СИОЗС или СИОЗСН (сертралин, эсциталопрам, венлафаксин, дулоксетин)"],
+  ["linez", "Линезолид"],
+  ["benzo", "Бензодиазепины или Z-препараты"],
+  ["anticoag", "Антикоагулянты или антиагреганты"],
+  ["steroid", "Системные глюкокортикоиды"],
+  ["cni", "Циклоспорин, такролимус"],
+  ["mtx", "Метотрексат"],
+  ["ondan", "Ондансетрон или другие препараты, удлиняющие интервал QT"],
+  ["fq", "Фторхинолоны"],
+  ["cisplat", "Платина, ифосфамид или другие нефротоксичные средства"],
+  ["diur", "Диуретики, ингибиторы АПФ или сартаны"],
+  ["carbam", "Карбамазепин, фенитоин, рифампицин — индукторы CYP3A4"]
+];
+/* Дозы: пороги по функции почек (мл/мин); применяются к СКФ по CKD-EPI без индексации на ППТ (см. gfr). */
+const DRUGS = {
+  paracet:{n:"Парацетамол", grp:"неопиоидный анальгетик", route:"внутрь или в/в",
+    bands:[[0,"325–650 мг каждые 4–6 ч или 1000 мг каждые 6 ч; максимум 3000 мг/сут"]],
+    notes:"Не более 2000 мг/сут при печёночной дисфункции, регулярном употреблении алкоголя, кахексии, массе < 50 кг и у пожилых. Проверять скрытый парацетамол в комбинированных препаратах."},
+  ibu:{n:"Ибупрофен", grp:"НПВП неселективный", route:"внутрь",
+    bands:[[50,"400–600 мг каждые 6–8 ч; максимум 2400 мг/сут при длительном приёме"],[30,"снизить дозу и длительность, контроль креатинина"],[0,"не применять"]],
+    notes:"Короткий период полувыведения, предпочтителен при необходимости НПВП у пациента без сердечно-сосудистых рисков."},
+  napro:{n:"Напроксен", grp:"НПВП неселективный", route:"внутрь",
+    bands:[[50,"250–500 мг каждые 12 ч; максимум 1000 мг/сут при длительном приёме"],[30,"снизить дозу, избегать длительного курса"],[0,"не применять"]],
+    notes:"Наименьший сердечно-сосудистый риск среди неселективных НПВП; предпочтителен при сопутствующей кардиальной патологии, если НПВП необходим."},
+  diclo:{n:"Диклофенак", grp:"НПВП неселективный", route:"внутрь",
+    bands:[[50,"50 мг каждые 8–12 ч; максимум 150 мг/сут"],[30,"не рекомендуется"],[0,"не применять"]],
+    notes:"Более высокий сердечно-сосудистый риск; при онкогематологии предпочесть другие варианты. Есть местные формы с минимальной системной абсорбцией."},
+  keto:{n:"Кетопрофен", grp:"НПВП неселективный", route:"внутрь",
+    bands:[[50,"50 мг каждые 6 ч или 75 мг каждые 8 ч; максимум 300 мг/сут"],[30,"не рекомендуется"],[0,"не применять"]],
+    notes:"Высокий риск гастродуоденальной токсичности; обязательна гастропротекция."},
+  melox:{n:"Мелоксикам", grp:"НПВП с относительной селективностью к ЦОГ-2", route:"внутрь",
+    bands:[[50,"7,5–15 мг 1 раз в сутки; максимум 15 мг/сут"],[30,"7,5 мг 1 раз в сутки коротким курсом"],[0,"не применять"]],
+    notes:"При дозе 7,5 мг/сут минимально влияет на функцию тромбоцитов; удобен однократным приёмом."},
+  celeco:{n:"Целекоксиб", grp:"НПВП селективный к ЦОГ-2", route:"внутрь",
+    bands:[[50,"200 мг 1 раз в сутки или 100 мг каждые 12 ч; максимум 400 мг/сут"],[30,"снизить дозу вдвое, короткий курс"],[0,"не применять"]],
+    notes:"Меньший риск желудочно-кишечных осложнений и не влияет на функцию тромбоцитов — предпочтительный НПВП при умеренной тромбоцитопении, если НПВП необходим. Польза снижается при одновременном приёме аспирина."},
+  etori:{n:"Эторикоксиб", grp:"НПВП селективный к ЦОГ-2", route:"внутрь",
+    bands:[[50,"30–60 мг 1 раз в сутки (до 90 мг по показаниям)"],[30,"не рекомендуется"],[0,"не применять"]],
+    notes:"Дозозависимое повышение артериального давления и сердечно-сосудистых событий; контроль давления."},
+  tramadol:{n:"Трамадол", grp:"опиоид слабый", route:"внутрь или в/в",
+    bands:[[30,"50–100 мг каждые 6 ч; максимум 400 мг/сут (у пациентов старше 75 лет — 300 мг/сут)"],[10,"интервал 12 ч, максимум 200 мг/сут"],[0,"не рекомендуется"]],
+    notes:"Снижает порог судорожной готовности, риск серотонинового синдрома с антидепрессантами и линезолидом; эффект зависит от CYP2D6. При боли 7–10 баллов уступает сильным опиоидам."},
+  morphine:{n:"Морфин", grp:"опиоид сильный", route:"внутрь, п/к, в/в",
+    bands:[[60,"старт при неопиоидной терапии: 5 мг внутрь каждые 4 ч (или 2,5 мг в/в каждые 4 ч), титрование по эффекту"],[30,"старт 2,5–5 мг внутрь каждые 6 ч (доза на 25–50% ниже обычной, интервал увеличен), титрование под контролем седации"],[0,"избегать: накопление морфин-6-глюкуронида; предпочесть фентанил или бупренорфин"]],
+    notes:"Препарат сравнения. Пролонгированные формы — только после подбора суточной дозы короткими формами."},
+  oxy:{n:"Оксикодон", grp:"опиоид сильный", route:"внутрь",
+    bands:[[60,"старт 5 мг каждые 4–6 ч, далее пролонгированная форма 10 мг каждые 12 ч"],[30,"начинать с 2,5–5 мг, увеличить интервал, титровать медленно"],[0,"применять с осторожностью в сниженной дозе; предпочтительнее фентанил или бупренорфин"]],
+    notes:"Метаболизируется CYP3A4 и CYP2D6: азолы и другие ингибиторы существенно повышают концентрацию."},
+  hydro:{n:"Гидроморфон", grp:"опиоид сильный", route:"внутрь, п/к, в/в",
+    bands:[[60,"1,3 мг внутрь каждые 4 ч или 0,2–0,3 мг в/в каждые 3–4 ч, титрование"],[30,"старт 0,65–1,3 мг внутрь каждые 6 ч или 0,2 мг в/в каждые 4–6 ч (доза на 25–50% ниже обычной)"],[10,"старт 0,65 мг внутрь каждые 6–8 ч или 0,1–0,2 мг в/в каждые 6 ч (≈ 50% обычной начальной дозы), титрование под контролем седации"],[0,"0,65 мг внутрь каждые 8–12 ч или 0,1 мг в/в по потребности (≈ 25% обычной начальной дозы); накопление метаболитов при анурии — предпочесть фентанил"]],
+    notes:"Альтернатива морфину при его непереносимости; при почечной недостаточности переносится лучше морфина, но хуже фентанила."},
+  fenta:{n:"Фентанил трансдермальный", grp:"опиоид сильный", route:"пластырь",
+    bands:[[0,"только при стабильной суточной потребности: 12,5 мкг/ч ≈ 30–45 мг морфина внутрь в сутки; смена пластыря каждые 72 ч"]],
+    notes:"Препарат выбора при почечной недостаточности и нарушении глотания. Не применять для титрования при нестабильной боли и в первые дни терапии. Эффект развивается 12–24 ч: на этот период нужны короткодействующие формы. Лихорадка и согревание увеличивают всасывание."},
+  bupre:{n:"Бупренорфин трансдермальный", grp:"опиоид сильный", route:"пластырь",
+    bands:[[0,"35 мкг/ч ≈ 30–60 мг морфина внутрь в сутки; смена по инструкции (72–96 ч)"]],
+    notes:"Не требует коррекции при почечной недостаточности, в том числе на диализе. Потолочный эффект по угнетению дыхания, но и по анальгезии при высоких дозах."},
+  methadone:{n:"Метадон", grp:"опиоид сильный", route:"внутрь",
+    bands:[[0,"назначает только врач с опытом: нелинейная фармакокинетика, длительный период полувыведения, риск кумуляции"]],
+    notes:"Эффективен при невропатическом компоненте. Удлиняет QT, взаимодействует с азолами и фторхинолонами; ротация выполняется по специальным протоколам."},
+  gaba:{n:"Габапентин", grp:"адъювант при невропатической боли", route:"внутрь",
+    bands:[[60,"старт 100–300 мг на ночь, титрование до 900–3600 мг/сут в 3 приёма"],[30,"400–1400 мг/сут в 2 приёма"],[15,"200–700 мг/сут в 1 приём"],[0,"100–300 мг/сут в 1 приём"]],
+    notes:"Титровать 3–7 дней; основные побочные эффекты — седация, головокружение, отёки. С опиоидами усиливает угнетение дыхания."},
+  pregab:{n:"Прегабалин", grp:"адъювант при невропатической боли", route:"внутрь",
+    bands:[[60,"старт 25–75 мг на ночь, целевая доза 150–600 мг/сут в 2 приёма"],[30,"75–300 мг/сут в 2 приёма"],[15,"25–150 мг/сут"],[0,"25–75 мг/сут"]],
+    notes:"Быстрее титруется, чем габапентин; сопоставимый профиль побочных эффектов."},
+  dulox:{n:"Дулоксетин", grp:"адъювант при невропатической боли", route:"внутрь",
+    bands:[[30,"30 мг 1 раз в сутки 7 дней, далее 60 мг 1 раз в сутки"],[0,"не рекомендуется при СКФ < 30 мл/мин"]],
+    notes:"Единственный препарат с доказанной эффективностью при полинейропатии, вызванной химиотерапией. Риск серотонинового синдрома с трамадолом; контроль артериального давления и печёночных проб."},
+  amitr:{n:"Амитриптилин", grp:"адъювант при невропатической боли", route:"внутрь",
+    bands:[[0,"старт 10–25 мг на ночь, повышение каждые 3–7 дней до 25–75 мг/сут"]],
+    notes:"Антихолинергические эффекты, ортостатическая гипотензия, удлинение QT, риск задержки мочи и делирия у пожилых — у ослабленных пациентов предпочтительнее дулоксетин."},
+  dexa:{n:"Дексаметазон", grp:"адъювант", route:"внутрь или в/в",
+    bands:[[0,"4–8 мг/сут коротким курсом; при компрессии спинного мозга — 16 мг/сут и более по неотложному протоколу"]],
+    notes:"Эффективен при костной боли, инфильтрации, отёке вокруг очага, компрессии нервных структур. Контроль гликемии, риск инфекции, бессонницы, миопатии; длительный приём нежелателен."},
+  lido:{n:"Лидокаин местно", grp:"местная терапия", route:"пластырь 5% или гель",
+    bands:[[0,"пластырь до 12 ч в сутки на болезненную зону; гель или раствор для полости рта при мукозите"]],
+    notes:"Практически нет системных эффектов; удобен при постгерпетической невралгии и локальной боли."},
+  benzyd:{n:"Бензидамин", grp:"местная терапия при мукозите", route:"полоскание",
+    bands:[[0,"15 мл раствора для полоскания каждые 3 ч, не проглатывать"]],
+    notes:"Уменьшает боль при мукозите; при тяжёлом мукозите используется вместе с системными опиоидами."},
+  bisph:{n:"Золедроновая кислота", grp:"костно-модифицирующая терапия", route:"в/в",
+    bands:[[60,"4 мг каждые 3–4 недели, инфузия не менее 15 минут"],[30,"снижение дозы по инструкции с учётом СКФ"],[0,"противопоказана при СКФ < 30 мл/мин — рассмотреть деносумаб"]],
+    notes:"Санация полости рта до начала терапии (риск остеонекроза челюсти), контроль кальция и витамина D."},
+  denos:{n:"Деносумаб", grp:"костно-модифицирующая терапия", route:"п/к",
+    bands:[[0,"120 мг 1 раз в 4 недели; коррекция по функции почек не требуется"]],
+    notes:"Предпочтителен при почечной недостаточности; высокий риск гипокальциемии — обязательны препараты кальция и витамина D, контроль кальция."},
+  laxat:{n:"Слабительные (схема)", grp:"профилактика запора", route:"внутрь",
+    bands:[[0,"осмотическое (макрогол 1–2 пакета в сутки) ± стимулирующее (бисакодил 5–10 мг на ночь или сеннозиды); назначается вместе с опиоидом, а не по факту запора"]],
+    notes:"При опиоид-индуцированном запоре, устойчивом к схеме, — метилналтрексон или налоксегол. При нейтропении избегать ректальных вмешательств."},
+  metoclo:{n:"Метоклопрамид", grp:"противорвотное", route:"внутрь или в/в",
+    bands:[[60,"10 мг каждые 8 ч первые дни опиоидной терапии по потребности"],[0,"снизить дозу на 50%"]],
+    notes:"Экстрапирамидные реакции, особенно у молодых; не сочетать с галоперидолом без необходимости."},
+  halo:{n:"Галоперидол", grp:"противорвотное", route:"внутрь или п/к",
+    bands:[[0,"0,5–1 мг на ночь или каждые 8–12 ч при опиоид-индуцированной тошноте"]],
+    notes:"Удлиняет QT; учитывать совместное применение с ондансетроном, азолами, фторхинолонами."},
+  naloxone:{n:"Налоксон", grp:"антидот", route:"в/в или в/м",
+    bands:[[0,"при угнетении дыхания: 0,04–0,08 мг в/в дробно каждые 2 минуты до восстановления дыхания, не отменяя анальгезию полностью"]],
+    notes:"Держать в отделении при опиоидной терапии; помнить о коротком действии налоксона по сравнению с пролонгированными формами опиоидов."}
+};
+const EQUI = [
+  ["Морфин внутрь", 30, "препарат сравнения"],
+  ["Морфин в/в или п/к", 10, "соотношение с пероральной формой 1:3"],
+  ["Оксикодон внутрь", 20, "примерно в 1,5 раза сильнее морфина внутрь"],
+  ["Гидроморфон внутрь", 7.5, "примерно в 4 раза сильнее морфина внутрь"],
+  ["Гидроморфон в/в", 1.5, "—"],
+  ["Трамадол внутрь", 300, "потолок дозы 400 мг/сут"],
+  ["Фентанил трансдермально", 12.5, "мкг/ч; соответствует 30–45 мг морфина внутрь в сутки"],
+  ["Бупренорфин трансдермально", 35, "мкг/ч; соответствует 30–60 мг морфина внутрь в сутки"]
+];
+
+/* ===================== расчёты ===================== */
+/* СКФ по CKD-EPI 2021 (креатининовое уравнение без расовой поправки) — как в приложениях ОРИТ и фебрильной нейтропении.
+   idx — мл/мин/1,73 м²; v — для доз и порогов выбора препаратов: без индексации, idx × ППТ / 1,73 (KDIGO 2024),
+   ППТ по Мостеллеру; без роста или массы берётся индексированное значение. */
+function gfr(p){
+  const age = num(p.age), scr = num(p.scr);
+  if (age == null || scr == null || scr <= 0 || !p.sex) return null;
+  const f = p.sex === "f", k = f ? 0.7 : 0.9, a = f ? -0.241 : -0.302;
+  const idx = 142 * Math.pow(Math.min(scr / k, 1), a) * Math.pow(Math.max(scr / k, 1), -1.2) * Math.pow(0.9938, age) * (f ? 1.012 : 1);
+  const w = num(p.weight), h = num(p.height), bsa = w && h ? Math.sqrt(w * h / 3600) : null;
+  return {idx, bsa, v: bsa ? idx * bsa / 1.73 : idx,
+    note: bsa ? `CKD-EPI ${fN(idx, 0)} мл/мин/1,73 м², для доз — без индексации по ППТ ${fN(bsa, 2)} м²`
+      : `CKD-EPI ${fN(idx, 0)} мл/мин/1,73 м², для доз — индексированная СКФ: нет роста или массы для ППТ`};
+}
+function doseOf(key, p){
+  const d = DRUGS[key]; if (!d) return {n:key, dose:"—"};
+  const c = gfr(p);
+  if (!c) return {n:d.n, dose:d.bands[0][1], notes:d.notes, route:d.route, basis:"СКФ не рассчитана: нужны возраст, пол и креатинин"};
+  const b = d.bands.find(x => c.v >= x[0]) || d.bands[d.bands.length - 1];
+  return {n:d.n, dose:b[1], notes:d.notes, route:d.route, basis:`СКФ ${fN(c.v, 0)} мл/мин (CKD-EPI)`};
+}
+const sev = n => n == null ? null : n === 0 ? "нет боли" : n <= 3 ? "слабая" : n <= 6 ? "умеренная" : "сильная";
+function omeDaily(p){
+  let t = 0;
+  const add = (v, f) => { const x = num(v); if (x) t += x * f; };
+  add(p.curMorphinePO, 1); add(p.curMorphineIV, 3); add(p.curOxy, 1.5); add(p.curTram, 0.1);
+  add(p.curFenta, 2.4); add(p.curHydro, 4);
+  return t ? Math.round(t) : 0;
+}
+
+/* ===================== движок рекомендаций ===================== */
+function recommend(p){
+  const out = {flags:[], rx:[], adj:[], support:[], plan:[], notes:[], inter:[]};
+  const c = gfr(p), cr = c ? c.v : null;
+  const now = num(p.nrsNow), worst = num(p.nrsWorst), avg = num(p.nrsAvg);
+  const level = Math.max(now ?? 0, avg ?? 0);
+  const plt = num(p.plt), ome = omeDaily(p);
+  const D = k => doseOf(k, p);
+  out.gfr = c; out.level = level; out.ome = ome;
+
+  /* красные флаги */
+  for (const [k, t] of RED_FLAGS) if ((p.red || {})[k]) {
+    const txt = {
+      cord:"Неотложная ситуация: дексаметазон 16 мг и более в/в немедленно, МРТ всего позвоночника в течение часов, консультация нейрохирурга и лучевого терапевта. Задержка ведёт к необратимому парезу.",
+      fract:"Иммобилизация, рентгенография или КТ зоны, консультация ортопеда и лучевого терапевта; обсудить вертебропластику или остеосинтез, начать костно-модифицирующую терапию.",
+      infect:"Исключить инфекцию: посевы, осмотр очага; при нейтропении — протокол фебрильной нейтропении. НПВП могут маскировать лихорадку.",
+      svc:"Срочная КТ с контрастированием, дексаметазон, консультация онколога и сосудистого хирурга.",
+      rapid:"Пересмотреть причину боли: прогрессирование, перелом, тромбоз, инфекция; выполнить визуализацию, не ограничиваясь повышением дозы анальгетика.",
+      crisis:"Болевой криз: парентеральное титрование опиоида под наблюдением (например, морфин 1–2 мг в/в каждые 10–15 минут до снижения боли), мониторинг дыхания и седации, налоксон под рукой."
+    }[k];
+    out.flags.push({lvl:"crit", t, d:txt});
+  }
+
+  /* противопоказания к НПВП */
+  const nsaidBlock = [], nsaidCare = [];
+  if (plt != null && plt < 50) nsaidBlock.push(`тромбоциты ${plt} × 10⁹/л`);
+  if (cr != null && cr < 30) nsaidBlock.push(`СКФ ${fN(cr, 0)} мл/мин`);
+  if (p.ulcer) nsaidBlock.push("язвенная болезнь или кровотечение в анамнезе");
+  if (p.hf) nsaidBlock.push("сердечная недостаточность");
+  if ((p.comed || {}).anticoag) nsaidBlock.push("антикоагулянтная или антиагрегантная терапия");
+  if (plt != null && plt >= 50 && plt < 100) nsaidCare.push(`тромбоциты ${plt} × 10⁹/л`);
+  if (cr != null && cr >= 30 && cr < 60) nsaidCare.push(`СКФ ${fN(cr, 0)} мл/мин`);
+  if ((p.comed || {}).cni || (p.comed || {}).cisplat) nsaidCare.push("нефротоксичная терапия");
+  if (p.age && num(p.age) >= 65) nsaidCare.push("возраст 65 лет и старше");
+  out.nsaidBlock = nsaidBlock; out.nsaidCare = nsaidCare;
+
+  /* базовая терапия */
+  out.rx.push({...D("paracet"), why:"базовый неопиоидный анальгетик: назначается по часам, а не по требованию; уменьшает потребность в опиоидах и не влияет на тромбоциты."});
+  if (!nsaidBlock.length && level >= 1 && ((p.type || {}).bone || (level <= 6 && !(p.type || {}).neuro))) {
+    const pick = p.cvRisk ? "napro" : plt != null && plt < 100 ? "celeco" : "ibu";
+    out.rx.push({...D(pick), why:`НПВП добавляется к парацетамолу${(p.type || {}).bone ? " — особенно эффективен при костной боли" : ""}. Противопоказаний по текущим данным нет.${nsaidCare.length ? " Факторы риска: " + nsaidCare.join(", ") + " — минимальная эффективная доза, короткий курс, контроль креатинина и гемоглобина." : ""}`,
+      alt:"Обязательна гастропротекция (ингибитор протонной помпы) при возрасте 65 лет и старше, язве в анамнезе, приёме глюкокортикоидов или антикоагулянтов."});
+  } else if (nsaidBlock.length) {
+    out.flags.push({lvl:"warn", t:"НПВП противопоказаны", d:`Причины: ${nsaidBlock.join("; ")}. Усиление обезболивания за счёт опиоида, адъювантов и местной терапии. При крайней необходимости и тромбоцитах 50–100 × 10⁹/л рассматривается только селективный ингибитор ЦОГ-2 коротким курсом под контролем.`});
+  }
+
+  /* опиоиды */
+  const renalOpioid = cr != null && cr < 30;
+  const crisis = !!(p.red || {}).crisis;
+  const opioidNaive = !ome && p.opioidNow !== "strong";
+  if (level >= 7 || p.opioidNow === "strong" || crisis) {
+    if (renalOpioid && opioidNaive) {
+      /* пластырь не подходит для подбора дозы: сначала короткодействующий опиоид, пластырь — после стабилизации */
+      out.rx.push({...D("hydro"), why:`СКФ ${fN(cr, 0)} мл/мин: морфин противопоказан из-за накопления метаболитов. Подбор дозы начинают короткодействующим гидроморфоном в сниженной дозе под контролем седации.`});
+      out.rx.push({...D("bupre"), dose:"не начинать до подбора суточной дозы короткими формами; затем пластырь по эквиваленту: 35 мкг/ч ≈ 30–60 мг морфина внутрь в сутки",
+        why:"После стабилизации суточной потребности — перевод на бупренорфин или фентанил трансдермально: не требуют коррекции при почечной недостаточности."});
+    } else if (renalOpioid) {
+      out.rx.push({...D("bupre"), why:`СКФ ${fN(cr, 0)} мл/мин: бупренорфин или фентанил предпочтительнее морфина, метаболиты которого накапливаются. Для титрования используются короткодействующие формы, пластырь подключается при стабильной суточной потребности.`});
+      out.rx.push({...D("hydro"), why:"Для титрования и прорывной боли при почечной недостаточности — гидроморфон в сниженной дозе под контролем седации."});
+    } else {
+      out.rx.push({...D("morphine"), why:"Сильная боль (7–10 баллов) или недостаточный эффект слабого опиоида: старт сильного опиоида короткими формами с титрованием каждые 24 часа до контроля боли."});
+      out.rx.push({...D("oxy"), why:"Альтернатива морфину при его непереносимости; при приёме азолов концентрация оксикодона существенно повышается — начинать с меньшей дозы."});
+    }
+  } else if (level >= 4) {
+    if (cr != null && cr < 10) out.rx.push({...D("morphine"), why:"Умеренная боль при выраженной почечной недостаточности: трамадол не рекомендуется, начинают с низких доз сильного опиоида под контролем."});
+    else out.rx.push({...D("tramadol"), why:"Умеренная боль (4–6 баллов): слабый опиоид в дополнение к неопиоидной терапии. При недостаточном эффекте в течение 24–48 часов — переход на низкие дозы сильного опиоида, а не увеличение трамадола выше потолка."});
+  } else if (level >= 1) {
+    out.notes.push("Слабая боль (1–3 балла): неопиоидная терапия по часам, адъюванты по типу боли, повторная оценка через 24–48 часов.");
+  }
+
+  /* прорывная боль */
+  const totalOme = ome || (level >= 7 ? 30 : 0);
+  if (totalOme) {
+    const b1 = Math.round(totalOme * 0.1), b2 = Math.round(totalOme * 0.15);
+    out.support.push(`Прорывная боль: разовая доза 10–15% от суточной дозы в пересчёте на морфин внутрь — ${b1}–${b2} мг морфина внутрь (или эквивалент), до 4–6 раз в сутки. Если требуется больше 3–4 доз в сутки, плановая суточная доза увеличивается на сумму принятых доз.`);
+  }
+  /* поддерживающая терапия */
+  if (level >= 4 || ome) {
+    out.support.push(`Профилактика запора с первого дня опиоида: ${D("laxat").dose}.`);
+    out.support.push(`Тошнота в первые дни: ${D("metoclo").dose} или ${D("halo").dose}; обычно проходит за 3–5 дней.`);
+    out.support.push(`Контроль седации и дыхания, особенно при сочетании с бензодиазепинами и габапентиноидами. ${D("naloxone").dose}.`);
+  }
+  /* адъюванты */
+  const t = p.type || {};
+  if (t.neuro) {
+    if (p.cipn) out.adj.push({...D("dulox"), why:"Полинейропатия, вызванная химиотерапией: дулоксетин — единственный препарат с доказанной эффективностью в этой ситуации."});
+    out.adj.push({...D("pregab"), why:"Невропатический компонент боли: габапентиноид с медленным титрованием; при сочетании с опиоидом усиливается седация."});
+    if (!p.cipn && (cr == null || cr >= 30)) out.adj.push({...D("dulox"), why:"Альтернатива габапентиноиду при невропатической боли, особенно при сопутствующей депрессии."});
+    const qtRisk = ["ondan", "fq", "azole"].some(k => (p.comed || {})[k]), older = p.elderly || (num(p.age) != null && num(p.age) >= 65);
+    if (!older && !qtRisk) out.adj.push({...D("amitr"), why:"Резервный вариант при невропатической боли; у ослабленных и пожилых пациентов применяется осторожно из-за антихолинергических эффектов."});
+  }
+  if (t.bone) {
+    out.adj.push({...D("dexa"), why:"Костная боль и боль от инфильтрации: короткий курс глюкокортикоида уменьшает отёк и воспаление вокруг очага."});
+    out.adj.push({...(cr != null && cr < 30 ? D("denos") : D("bisph")), why:`Костно-модифицирующая терапия при метастатическом поражении и миеломе${cr != null && cr < 30 ? ": при СКФ ниже 30 мл/мин бисфосфонаты противопоказаны, применяется деносумаб" : ""}. Обсудить лучевую терапию на болезненный очаг — часто даёт стойкий эффект.`});
+  }
+  if (t.muco) {
+    out.adj.push({...D("benzyd"), why:"Мукозит: местная терапия в дополнение к системной; при тяжёлом мукозите — морфин внутрь или парентерально, в том числе в режиме управляемой пациентом аналгезии."});
+    out.adj.push({...D("lido"), why:"Местные формы лидокаина для полости рта перед приёмом пищи."});
+  }
+  if ((t.neuro || t.nocic) && !out.adj.some(x => x.n === DRUGS.lido.n)) out.adj.push({...D("lido"), why:"Локальная боль ограниченной зоны: пластырь с лидокаином практически без системных эффектов."});
+  if (t.proc) out.support.push("Процедурная боль: короткодействующий опиоид за 30–60 минут до манипуляции (или фентанил в/в непосредственно перед ней), местная анестезия, при необходимости — седация по протоколу отделения.");
+  if (t.head) out.support.push("Головная боль после люмбальной пункции: покой, гидратация, кофеин; при сохранении более 48 часов — обсудить пломбирование аутокровью с анестезиологом.");
+
+  /* взаимодействия */
+  const cm = p.comed || {};
+  const I = (lvl, t2, d) => out.inter.push({lvl, t:t2, d});
+  if (cm.azole) I("crit", "Азолы + опиоиды, метаболизируемые CYP3A4", "Вориконазол, позаконазол и итраконазол повышают концентрацию оксикодона, фентанила, метадона и бупренорфина: риск избыточной седации и угнетения дыхания. Начинать с дозы на 25–50% ниже, усилить наблюдение; морфин и гидроморфон этим взаимодействием не затронуты.");
+  if (cm.azole && (t.neuro)) I("warn", "Азолы + адъюванты", "Итраконазол и позаконазол не влияют на габапентиноиды (выводятся почками) — при значимых взаимодействиях габапентин или прегабалин предпочтительнее трициклических антидепрессантов.");
+  if (cm.ssri || cm.linez) I("crit", "Трамадол + серотонинергические препараты", "Сочетание с СИОЗС, СИОЗСН или линезолидом повышает риск серотонинового синдрома и судорог. Предпочесть другой опиоид; при необходимости — минимальная доза и наблюдение за тремором, гипертермией, ажитацией.");
+  if (cm.ssri && (t.neuro)) I("warn", "Дулоксетин + СИОЗС/СИОЗСН", "Не комбинировать два серотонинергических антидепрессанта: заменить один препарат, а не добавлять второй.");
+  if (cm.benzo) I("crit", "Опиоид + бензодиазепины", "Значимый риск угнетения дыхания и избыточной седации. Пересмотреть необходимость бензодиазепина, использовать минимальные дозы, контроль дыхания, налоксон в доступности.");
+  if (cm.anticoag) I("crit", "НПВП + антикоагулянты или антиагреганты", "Риск желудочно-кишечного кровотечения многократно возрастает, особенно при тромбоцитопении. НПВП не назначать; при необходимости обезболивания — парацетамол, опиоид, местные средства.");
+  if (cm.steroid) I("warn", "НПВП + глюкокортикоиды", "Совместное применение повышает риск гастродуоденальных осложнений; при вынужденной комбинации — обязательная гастропротекция.");
+  if (cm.cni) I("warn", "НПВП + циклоспорин или такролимус", "Усиление нефротоксичности и рост концентрации ингибиторов кальциневрина. Контроль креатинина и концентрации препарата, по возможности отказаться от НПВП.");
+  if (cm.mtx) I("crit", "НПВП + метотрексат", "НПВП снижают выведение метотрексата и повышают его токсичность; при высокодозной терапии сочетание недопустимо.");
+  if (cm.ondan || cm.fq) I("warn", "Удлинение интервала QT", "Метадон, галоперидол, амитриптилин, ондансетрон, фторхинолоны и азолы вместе удлиняют QT. Записать ЭКГ до начала и при повышении дозы, контролировать калий и магний.");
+  if (cm.cisplat || cm.diur) I("warn", "Нефротоксичные сочетания", "Платина, ифосфамид, диуретики, ингибиторы АПФ и НПВП вместе повышают риск острого повреждения почек: избегать НПВП, контролировать креатинин и диурез.");
+  if (cm.carbam) I("warn", "Индукторы CYP3A4", "Карбамазепин, фенитоин и рифампицин снижают концентрацию оксикодона, фентанила и метадона: возможен внезапный дефицит обезболивания и синдром отмены.");
+  if (p.liver) I("warn", "Печёночная дисфункция", "Парацетамол не более 2000 мг/сут; НПВП и трамадол с осторожностью; при опиоидах удлиняется период полувыведения — увеличивать интервал и титровать медленнее.");
+
+  /* план */
+  const lvlTxt = sev(level) || "не оценена";
+  out.plan = [
+    {when:"сегодня", title:"Старт и цель терапии", acts:[
+      `Текущая интенсивность: ${now != null ? now + " из 10" : "не указана"}; в среднем за сутки: ${avg != null ? avg : "—"}; худшая: ${worst != null ? worst : "—"} (${lvlTxt}).`,
+      "Цель — снизить боль до 3 баллов и ниже и восстановить сон; согласовать цель с пациентом.",
+      "Назначать анальгетики по часам, а не по требованию; отдельно предусмотреть дозы для прорывной боли.",
+      "Оценить и записать функцию: сон, ходьба, самообслуживание, настроение."], br:[]},
+    {when:"через 24 часа", title:"Первая контрольная точка", acts:[
+      "Повторная оценка по той же шкале, число доз прорывной боли за сутки, побочные эффекты (тошнота, запор, седация).",
+      "Проверить регулярность приёма и понимание схемы пациентом и родственниками."],
+      br:[["боль не снизилась и требуется более 3–4 доз прорывной терапии в сутки", "Увеличить суточную дозу опиоида на 30–50% (или на сумму принятых прорывных доз), пересчитать дозу прорывной боли как 10–15% новой суточной."],
+        ["появились выраженная седация или частота дыхания ниже 8 в минуту", "Пропустить дозу, снизить суточную дозу на 25–50%, исключить почечную недостаточность и взаимодействия; при угнетении дыхания — налоксон дробно."]]},
+    {when:"через 48–72 часа", title:"Оценка эффекта и адъювантов", acts:[
+      "Если боль контролируется стабильной дозой короткодействующего опиоида — перевести на пролонгированную форму той же суточной дозы, сохранив прорывные дозы.",
+      "Адъюванты при невропатической боли оцениваются не раньше 5–7 дней от начала титрования."],
+      br:[["эффекта нет при росте дозы и появлении побочных эффектов", "Ротация опиоида: перевод по таблице эквианальгетических доз со снижением расчётной дозы на 25–50% из-за неполной перекрёстной толерантности."],
+        ["боль преимущественно невропатическая", "Усилить адъювантную терапию, рассмотреть консультацию специалиста по боли и интервенционные методы (блокады, эпидуральное или интратекальное введение)."]]},
+    {when:"далее", title:"Наблюдение и безопасность", acts:[
+      "Регулярная оценка боли при каждом визите и при изменении терапии; дневник боли у пациента.",
+      "Контроль креатинина и печёночных проб, гемоглобина при НПВП; пересмотр схемы при изменении функции почек.",
+      "Плановая ревизия необходимости опиоида при противоопухолевом ответе: снижение дозы на 10–25% в неделю во избежание синдрома отмены.",
+      "Обсуждение немедикаментозных методов: лучевая терапия на очаг, физическая реабилитация, психологическая поддержка, методы релаксации."], br:[]}
+  ];
+  return out;
+}
+
+/* ===================== состояние ===================== */
+const S = {tab:"assess", ep:newEpisode(), list:[], ai:{}, sample:null, downloads:null, store:null};
+function newEpisode(){
+  return {id:rid(), createdAt:new Date().toISOString(), author:lsGet("pain-user") || "", name:"", card:"", age:"", sex:"", weight:"", height:"", scr:"",
+    dx:"", plt:"", liver:false, ulcer:false, hf:false, cvRisk:false, elderly:false, cipn:false,
+    nrsNow:"", nrsAvg:"", nrsWorst:"", scaleUsed:"nrs", painadScore:"", dn4:"", sleep:"", activity:"",
+    type:{}, red:{}, comed:{}, location:"", character:"", breakthroughPerDay:"",
+    curMorphinePO:"", curMorphineIV:"", curOxy:"", curTram:"", curFenta:"", curHydro:"", curOther:"",
+    opioidNow:"none", sideEffects:{}, diary:[], note:"", outcome:""};
+}
+function Local(){
+  const KEY = "pain-cases"; let all = {};
+  try { all = JSON.parse(lsGet(KEY)) || {}; } catch(e) {}
+  const save = () => lsSet(KEY, JSON.stringify(all));
+  return {kind:"local", listen(cb){ setTimeout(() => cb(Object.values(all))); return () => {}; },
+    async put(e){ all[e.id] = e; save(); S.list = Object.values(all); render(); },
+    async del(id){ delete all[id]; save(); S.list = Object.values(all); render(); }};
+}
+function Remote(db){
+  return {kind:"db", listen(cb, err){ return db.collection("pain").onSnapshot(s => cb(s.docs.map(d => ({id:d.id, ...d.data()}))), err); },
+    async put(e){ await db.doc("pain/" + e.id).set(e); }, async del(id){ await db.doc("pain/" + id).delete(); }};
+}
+
+/* ===================== интерфейс ===================== */
+const TABS = [["assess","Пациент и боль"],["rec","Схема обезболивания"],["inter","Взаимодействия"],["ref","Справочник доз"],["diary","Дневник боли"],["cases","Случаи"]];
+function render(){
+  $("#tabs").innerHTML = TABS.map(([k, l]) => `<button class="tab" role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join("");
+  $("#view").innerHTML = S.tab === "assess" ? assessHTML() : S.tab === "rec" ? recHTML() : S.tab === "inter" ? interHTML()
+    : S.tab === "ref" ? refHTML() : S.tab === "diary" ? diaryHTML() : casesHTML();
+}
+const F = (label, key, type, opts) => {
+  const v = S.ep[key] ?? "";
+  if (type === "sel") return `<label class="f">${label}<select data-k="${key}">${opts.map(([a, b]) => `<option value="${a}" ${String(v) === a ? "selected" : ""}>${b}</option>`).join("")}</select></label>`;
+  if (type === "area") return `<label class="f" style="grid-column:1/-1">${label}<textarea data-k="${key}">${esc(v)}</textarea></label>`;
+  return `<label class="f">${label}<input data-k="${key}" type="${type || "text"}" value="${esc(v)}"></label>`;
+};
+const CB = (label, key, group) => {
+  const v = group ? !!(S.ep[group] || {})[key] : !!S.ep[key];
+  return `<label class="chk"><input type="checkbox" data-k="${key}" ${group ? `data-g="${group}"` : ""} ${v ? "checked" : ""}><span>${label}</span></label>`;
+};
+function nrsPicker(key, label){
+  const cur = S.ep[key];
+  const btns = [];
+  for (let i = 0; i <= 10; i++) {
+    const cls = i === 0 ? "g" : i <= 3 ? "g" : i <= 6 ? "y" : "r";
+    btns.push(`<button type="button" class="${cls}" data-nrs="${key}" data-val="${i}" aria-pressed="${String(cur) === String(i)}">${i}</button>`);
+  }
+  return `<div style="margin-bottom:14px"><div style="font-size:13px;color:var(--ink-2)">${label}</div><div class="nrs">${btns.join("")}</div>
+    <div class="scale-legend"><span>0 — нет боли</span><span>4–6 — умеренная</span><span>10 — невыносимая</span></div></div>`;
+}
+function assessHTML(){
+  const faces = ["🙂 0–1 нет боли","🙂 2–3 слабая","😐 4–5 умеренная","😕 6–7 сильная","😣 8–9 очень сильная","😫 10 невыносимая"];
+  return `<div class="card"><h3>Пациент</h3><div class="grid">
+    ${F("ФИО или код","name")}${F("№ истории болезни","card")}${F("Возраст, лет","age")}
+    ${F("Пол","sex","sel",[["","не указан"],["m","мужской"],["f","женский"]])}
+    ${F("Масса тела, кг","weight")}${F("Рост, см","height")}${F("Креатинин, мг/дл","scr")}
+    ${F("Тромбоциты, ×10⁹/л","plt")}${F("Диагноз","dx")}
+  </div><div class="cols" style="margin-top:8px">
+    ${CB("Печёночная дисфункция, цирроз или регулярное употребление алкоголя","liver")}
+    ${CB("Язвенная болезнь или желудочно-кишечное кровотечение в анамнезе","ulcer")}
+    ${CB("Сердечная недостаточность","hf")}
+    ${CB("Высокий сердечно-сосудистый риск (ИБС, инсульт, гипертензия)","cvRisk")}
+    ${CB("Ослабленный или пожилой пациент (риск делирия и падений)","elderly")}
+    ${CB("Полинейропатия, вызванная химиотерапией","cipn")}
+  </div></div>
+
+  <div class="card"><h3>Оценка боли</h3>
+    ${nrsPicker("nrsNow","Числовая рейтинговая шкала (ЧРШ): боль сейчас")}
+    ${nrsPicker("nrsAvg","Средняя боль за последние сутки")}
+    ${nrsPicker("nrsWorst","Наихудшая боль за последние сутки")}
+    <div class="grid">
+      ${F("Шкала, которой пользуетесь","scaleUsed","sel",[["nrs","Числовая рейтинговая шкала 0–10"],["vas","Визуальная аналоговая шкала (ВАШ, 0–100 мм)"],["vrs","Вербальная шкала (нет, слабая, умеренная, сильная)"],["faces","Шкала лиц Вонга–Бейкера"],["painad","PAINAD: пациент без речевого контакта"]])}
+      ${F("PAINAD, баллы (0–10)","painadScore")}
+      ${F("Эпизодов прорывной боли в сутки","breakthroughPerDay")}
+      ${F("Нарушение сна из-за боли","sleep","sel",[["","не указано"],["no","нет"],["some","просыпается иногда"],["severe","сон нарушен каждую ночь"]])}
+      ${F("Ограничение активности","activity","sel",[["","не указано"],["no","нет"],["some","ограничивает часть дел"],["severe","не может обслуживать себя"]])}
+      ${F("Локализация","location")}
+      ${F("Характер боли (жжение, прострелы, ноющая, распирающая)","character")}
+      ${F("Опросник DN4, баллы (≥ 4 — невропатический компонент)","dn4")}
+    </div>
+    <p class="snote" style="margin-top:8px">Шкала лиц: ${faces.map(f => `<span class="face">${f}</span>`).join(" ")}</p>
+    <p class="snote">PAINAD применяется у пациентов без речевого контакта: дыхание, вокализация, мимика, поза, реакция на утешение — по 0–2 балла, сумма 0–10 сопоставима с числовой шкалой.</p>
+  </div>
+
+  <div class="card"><h3>Тип боли</h3><div class="cols">${PAIN_TYPES.map(([k, l]) => CB(l, k, "type")).join("")}</div></div>
+
+  <div class="card"><h3>Тревожные признаки</h3><div class="cols">${RED_FLAGS.map(([k, l]) => CB(l, k, "red")).join("")}</div></div>
+
+  <div class="card"><h3>Текущее обезболивание (для пересчёта суточной дозы)</h3><div class="grid">
+    ${F("Опиоид сейчас","opioidNow","sel",[["none","не получает"],["weak","слабый опиоид"],["strong","сильный опиоид"]])}
+    ${F("Морфин внутрь, мг/сут","curMorphinePO")}${F("Морфин в/в или п/к, мг/сут","curMorphineIV")}
+    ${F("Оксикодон внутрь, мг/сут","curOxy")}${F("Трамадол, мг/сут","curTram")}
+    ${F("Фентанил трансдермально, мкг/ч","curFenta")}${F("Гидроморфон внутрь, мг/сут","curHydro")}
+    ${F("Другие анальгетики","curOther")}
+  </div></div>
+
+  <div class="card"><h3>Сопутствующая терапия (для проверки взаимодействий)</h3><div class="cols">${COMEDS.map(([k, l]) => CB(l, k, "comed")).join("")}</div></div>
+
+  <div class="row noprint"><button class="btn primary" data-act="toRec">Показать схему обезболивания</button><button class="btn" data-act="save">Сохранить случай</button><button class="btn ghost" data-act="new">Новый случай</button><span class="msg" id="saveMsg"></span></div>`;
+}
+const tile = (l, v, s, c) => `<div class="tile ${c || ""}"><div class="tl">${l}</div><div class="tv">${v}</div><div class="ts">${esc(s || "")}</div></div>`;
+function rxCard(x){
+  return `<div class="rx"><div class="rxh"><span class="rxn">${esc(x.n)}</span><span class="dose">${esc(x.dose)}</span><span class="faint">${esc(x.route || "")}${x.basis ? " · " + esc(x.basis) : ""}</span></div>
+    <div class="why">${esc(x.why || "")}</div>${x.notes ? `<div class="alt">${esc(x.notes)}</div>` : ""}${x.alt ? `<div class="alt">${esc(x.alt)}</div>` : ""}</div>`;
+}
+function recHTML(){
+  const p = S.ep, r = recommend(p), c = r.gfr, now = num(p.nrsNow);
+  const lvl = r.level, cls = lvl >= 7 ? "crit" : lvl >= 4 ? "warn" : "ok";
+  let o = `<div class="tiles">
+    ${tile("Боль сейчас", now != null ? now : "—", sev(now) || "не оценена", now == null ? "" : now >= 7 ? "crit" : now >= 4 ? "warn" : "ok")}
+    ${tile("Уровень для выбора", lvl || "—", sev(lvl) || "", cls)}
+    ${tile("Суточная доза в пересчёте на морфин", r.ome ? r.ome + " мг" : "—", "морфин внутрь", r.ome >= 200 ? "warn" : "")}
+    ${tile("СКФ (CKD-EPI)", c ? fN(c.idx, 0) : "—", c ? (c.bsa ? `мл/мин/1,73 м²; для доз ${fN(c.v, 0)} мл/мин` : "мл/мин/1,73 м²; для доз без пересчёта на ППТ") : "нужны возраст, пол, креатинин", !c ? "" : c.v < 30 ? "crit" : c.v < 60 ? "warn" : "ok")}
+    ${tile("Тромбоциты", num(p.plt) != null ? num(p.plt) : "—", "×10⁹/л", num(p.plt) != null && num(p.plt) < 50 ? "crit" : num(p.plt) != null && num(p.plt) < 100 ? "warn" : "ok")}
+    ${tile("НПВП", r.nsaidBlock.length ? "нельзя" : r.nsaidCare.length ? "с осторожностью" : "можно", r.nsaidBlock.length ? r.nsaidBlock.join("; ") : r.nsaidCare.join("; "), r.nsaidBlock.length ? "crit" : r.nsaidCare.length ? "warn" : "ok")}
+  </div>`;
+  o += r.flags.map(f => `<div class="alert ${f.lvl}"><span class="lvl">${f.lvl === "crit" ? "неотложно" : "внимание"}</span><b>${esc(f.t)}</b><p>${esc(f.d)}</p></div>`).join("");
+  o += `<h3 class="sec">Базовая схема</h3>` + r.rx.map(rxCard).join("");
+  if (r.adj.length) o += `<h3 class="sec">Адъюванты по типу боли</h3>` + r.adj.map(rxCard).join("");
+  if (r.support.length || r.notes.length) o += `<h3 class="sec">Сопровождение и безопасность</h3><div class="card"><ul style="margin:0;padding-left:20px">${[...r.notes, ...r.support].map(x => `<li style="margin:6px 0">${esc(x)}</li>`).join("")}</ul></div>`;
+  o += `<h3 class="sec">План по этапам</h3><div class="plan">` + r.plan.map((st, i) => {
+    const acts = st.acts.map(a => `<li>${esc(a)}</li>`).join("");
+    const brs = st.br.map(b => `<div class="branch"><span class="cond">Если ${esc(b[0])}</span><span class="then">${esc(b[1])}</span></div>`).join("");
+    return `<section class="step ${i >= 2 ? "later" : ""}"><span class="when">${esc(st.when)}</span><h4>${esc(st.title)}</h4><ul>${acts}</ul>${brs}</section>`;
+  }).join("") + `</div>`;
+  o += `<h3 class="sec">Ротация опиоидов</h3><div class="card"><p class="snote">Эквианальгетические суточные дозы. При смене препарата рассчитанную дозу снижают на 25–50% из-за неполной перекрёстной толерантности, а затем титруют по эффекту; прорывная доза — 10–15% новой суточной дозы.</p>
+    <div class="scroll"><table><thead><tr><th>Препарат</th><th>Эквивалент</th><th>Примечание</th></tr></thead><tbody>
+    ${EQUI.map(([n, v, note]) => `<tr><td>${esc(n)}</td><td>${fN(v, 1)}</td><td>${esc(note)}</td></tr>`).join("")}</tbody></table></div></div>`;
+  o += `<h3 class="sec">Разбор случая (ИИ)</h3><div class="ai" id="aiBox">${aiBox("case","ИИ сопоставит характеристику боли, сопутствующую терапию, функцию почек и предложенную схему, укажет пробелы и спорные места.")}</div>`;
+  o += `<div class="row noprint"><button class="btn" data-act="save">Сохранить случай</button><button class="btn" data-act="print">Печать</button>${S.downloads ? `<button class="btn" data-act="export">Выгрузить схему (CSV)</button>` : ""}</div>`;
+  return o;
+}
+function interHTML(){
+  const r = recommend(S.ep);
+  const rows = [
+    ["НПВП", "Желудочно-кишечное кровотечение, острое повреждение почек, задержка жидкости, повышение давления, влияние на тромбоциты (кроме селективных ингибиторов ЦОГ-2)", "Тромбоциты < 50, СКФ < 30, язва, сердечная недостаточность, антикоагулянты"],
+    ["Парацетамол", "Гепатотоксичность при передозировке и у ослабленных пациентов", "Суммарно не более 3000 мг/сут, при печёночной дисфункции — 2000 мг/сут"],
+    ["Трамадол", "Тошнота, головокружение, судороги, серотониновый синдром", "СИОЗС, СИОЗСН, линезолид, эпилепсия, СКФ < 10"],
+    ["Морфин", "Запор, тошнота, седация, угнетение дыхания, накопление метаболитов", "СКФ < 30 — предпочесть фентанил или бупренорфин"],
+    ["Оксикодон", "Как у морфина; концентрация растёт при приёме ингибиторов CYP3A4", "Азолы, кларитромицин, грейпфрут"],
+    ["Фентанил и бупренорфин трансдермально", "Отсроченное начало и длительное последействие; всасывание растёт при лихорадке", "Не использовать при нестабильной боли и для быстрого титрования"],
+    ["Метадон", "Кумуляция, удлинение QT", "Только опытный врач; ЭКГ до и после начала"],
+    ["Габапентин и прегабалин", "Седация, головокружение, отёки, усиление угнетения дыхания с опиоидами", "Коррекция дозы по СКФ обязательна"],
+    ["Дулоксетин", "Тошнота, бессонница, повышение давления, серотониновый синдром", "СКФ < 30 — не назначать; не комбинировать с СИОЗС"],
+    ["Амитриптилин", "Сухость во рту, задержка мочи, ортостаз, делирий, удлинение QT", "Осторожно у пожилых и при сердечной патологии"],
+    ["Дексаметазон", "Гипергликемия, бессонница, миопатия, риск инфекции, язвы с НПВП", "Короткие курсы, утренний приём"],
+    ["Бисфосфонаты и деносумаб", "Остеонекроз челюсти, гипокальциемия; бисфосфонаты нефротоксичны", "Санация полости рта, контроль кальция, при СКФ < 30 — деносумаб"]
+  ];
+  let o = `<div class="card"><h3>Найденные взаимодействия и предостережения</h3>
+    ${r.inter.length ? r.inter.map(x => `<div class="alert ${x.lvl}"><span class="lvl">${x.lvl === "crit" ? "высокий риск" : "внимание"}</span><b>${esc(x.t)}</b><p>${esc(x.d)}</p></div>`).join("")
+      : `<div class="alert ok"><span class="lvl">норма</span><b>Значимых взаимодействий по отмеченной терапии не найдено</b><p>Отметьте сопутствующие препараты на первом шаге — проверка выполняется по ним.</p></div>`}
+  </div>
+  <div class="card"><h3>Побочные эффекты и ограничения по классам</h3><div class="scroll"><table><thead><tr><th>Класс</th><th>Ключевые побочные эффекты</th><th>Когда не применять или менять дозу</th></tr></thead><tbody>
+    ${rows.map(([a, b, c]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="snote" style="margin-top:10px">Отдельно учитывайте, что у онкогематологических пациентов тромбоцитопения, нейтропения и почечная дисфункция меняются быстро: схему пересматривают при каждом значимом изменении анализов.</p></div>`;
+  return o;
+}
+function refHTML(){
+  const c = gfr(S.ep);
+  return `<div class="card"><h3>Дозы с учётом функции почек</h3>
+    <p class="snote">${c ? `Колонка «Для пациента» рассчитана для СКФ ${fN(c.v, 0)} мл/мин (${c.note}).` : "Заполните возраст, пол, креатинин, а также рост и массу на первом шаге, чтобы получить дозу для конкретного пациента."}</p>
+    <div class="scroll"><table><thead><tr><th>Препарат</th><th>Группа</th><th>Путь</th><th>Для пациента</th><th>Особенности</th></tr></thead><tbody>
+    ${Object.entries(DRUGS).map(([k, d]) => { const x = doseOf(k, S.ep);
+      return `<tr><td><b>${esc(d.n)}</b></td><td class="faint">${esc(d.grp)}</td><td class="faint">${esc(d.route)}</td><td>${esc(x.dose)}</td><td>${esc(d.notes || "")}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <p class="disc">Дозы НПВП и парацетамола адаптированы из таблицы UpToDate «НПВП и ацетаминофен: обычная пероральная дозировка для взрослых» (2024); опиоиды, адъюванты и сопровождение — по рекомендациям ESMO, NCCN и EAPC и инструкциям производителей. Перед назначением сверяйте с инструкцией, зарегистрированной в вашей стране.</p></div>`;
+}
+function diaryHTML(){
+  const d = (S.ep.diary || []).slice().sort((a, b) => a.t < b.t ? -1 : 1);
+  let chart = "";
+  if (d.length > 1) {
+    const W = 720, H = 200, P = {l:34, r:12, t:12, b:28};
+    const t0 = new Date(d[0].t).getTime(), t1 = new Date(d[d.length - 1].t).getTime(), span = t1 - t0 || 1;
+    const X = t => P.l + (new Date(t).getTime() - t0) / span * (W - P.l - P.r);
+    const Y = v => P.t + (10 - v) / 10 * (H - P.t - P.b);
+    let g = "";
+    for (let v = 0; v <= 10; v += 5) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${P.l - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--ink-3)">${v}</text>`;
+    const pts = d.map(x => `${X(x.t)},${Y(num(x.nrs) || 0)}`).join(" ");
+    const dots = d.map(x => `<circle cx="${X(x.t)}" cy="${Y(num(x.nrs) || 0)}" r="3.5" fill="${num(x.nrs) >= 7 ? "var(--rose)" : num(x.nrs) >= 4 ? "var(--amber)" : "var(--green)"}"><title>${esc(fDT(x.t))}: ${esc(x.nrs)} из 10${x.note ? " — " + esc(x.note) : ""}</title></circle>`).join("");
+    chart = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Динамика боли">${g}<polyline fill="none" stroke="var(--teal)" stroke-width="2" points="${pts}"/>${dots}
+      <text x="${P.l}" y="${H - 8}" font-size="11" fill="var(--ink-3)">${esc(fDT(d[0].t))}</text><text x="${W - P.r}" y="${H - 8}" text-anchor="end" font-size="11" fill="var(--ink-3)">${esc(fDT(d[d.length - 1].t))}</text></svg>`;
+  }
+  return `<div class="card"><h3>Добавить запись</h3><div class="grid">
+      <label class="f">Дата и время<input id="dTime" type="datetime-local" value="${nowLocal()}"></label>
+      <label class="f">Боль по шкале 0–10<input id="dNrs" inputmode="numeric"></label>
+      <label class="f">Доз прорывной боли с прошлой записи<input id="dBt" inputmode="numeric"></label>
+      <label class="f" style="grid-column:1/-1">Комментарий (терапия, побочные эффекты, сон)<input id="dNote"></label>
+    </div><div class="row noprint"><button class="btn primary" data-act="addDiary">Добавить</button></div></div>
+    ${d.length ? `<div class="card"><h3>Динамика</h3>${chart}
+      <div class="scroll" style="margin-top:12px"><table><thead><tr><th>Дата и время</th><th>Боль</th><th>Прорывные дозы</th><th>Комментарий</th><th></th></tr></thead><tbody>
+      ${d.slice().reverse().map((x, i) => `<tr><td>${esc(fDT(x.t))}</td><td><b>${esc(x.nrs)}</b> из 10</td><td>${esc(x.bt || "—")}</td><td>${esc(x.note || "")}</td><td><button class="btn ghost danger" data-deldiary="${esc(x.id)}">Удалить</button></td></tr>`).join("")}
+      </tbody></table></div></div>` : `<div class="card"><p class="snote">Записей пока нет. Дневник помогает увидеть, помогает ли схема и сколько раз в сутки нужна прорывная доза.</p></div>`}`;
+}
+function casesHTML(){
+  const list = S.list.slice().sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  return `<div class="card"><h3>Сохранённые случаи (${list.length})</h3>
+    <div class="row noprint"><button class="btn primary" data-act="save">Сохранить текущий</button><button class="btn ghost" data-act="new">Новый случай</button></div>
+    ${list.length ? list.map(e => { const r = recommend(e);
+      return `<button class="epi" data-open="${e.id}" aria-current="${e.id === S.ep.id}"><b>${esc(e.name || "Без имени")}</b> <span class="faint">${esc(e.dx || "")} · ${fDT(e.createdAt)}</span>
+        <div class="snote">боль ${e.nrsNow || "—"}/10 · ${sev(num(e.nrsNow)) || "не оценена"} · суточная доза в пересчёте на морфин ${omeDaily(e) || "—"} мг${e.outcome ? " · " + esc(e.outcome) : ""}</div></button>`; }).join("")
+      : `<p class="snote">Случаев пока нет.</p>`}</div>
+  <div class="card"><h3>Итог по случаю</h3><div class="grid">
+    ${F("Исход","outcome","sel",[["","не указан"],["controlled","боль контролируется (≤ 3 баллов)"],["partial","частичный эффект"],["rotation","выполнена ротация опиоида"],["referral","направлен к специалисту по боли"],["palliative","переведён на паллиативное сопровождение"]])}
+    ${F("Автор записи","author")}
+  </div>${F("Комментарий","note","area")}
+  <div class="row noprint"><button class="btn primary" data-act="save">Сохранить</button><button class="btn ghost danger" data-act="delete">Удалить случай</button></div></div>`;
+}
+function aiBox(key, hint){
+  const st = S.ai[key] || {};
+  if (!S.sample) return `<div class="muted">Функции ИИ доступны, когда страница открыта в Claude.</div>`;
+  let h = `<div class="row" style="margin-top:0">`;
+  h += st.busy ? `<span class="faint">Анализирую…</span><button class="btn" data-ai-stop="${key}">Остановить</button>`
+    : `<span class="faint" style="flex:1;min-width:220px">${esc(hint)}</span><button class="btn primary" data-ai="${key}">${st.text ? "Обновить" : "Запросить разбор"}</button>`;
+  h += `</div>`;
+  if (st.err) h += `<div class="msg err" style="margin-top:8px">${esc(st.err)}</div>`;
+  if (st.busy && !st.text) h += `<div class="aitext thinking">Думаю…</div>`;
+  if (st.text) h += `<div class="aitext">${md(st.text)}</div>`;
+  return h + `<div class="disc">Вспомогательное мнение по введённым данным; решение принимает лечащий врач.</div>`;
+}
+function md(src){
+  const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  let out = "", list = null; const close = () => { if (list) { out += `</${list}>`; list = null; } };
+  for (const raw of String(src).split("\n")) {
+    const l = raw.trim(); if (!l) { close(); continue; }
+    let m;
+    if ((m = l.match(/^#{1,4}\s+(.*)/))) { close(); out += `<h4>${inl(m[1])}</h4>`; }
+    else if ((m = l.match(/^[-*•]\s+(.*)/))) { if (list !== "ul") { close(); out += "<ul>"; list = "ul"; } out += `<li>${inl(m[1])}</li>`; }
+    else if ((m = l.match(/^\d+[.)]\s+(.*)/))) { if (list !== "ol") { close(); out += "<ol>"; list = "ol"; } out += `<li>${inl(m[1])}</li>`; }
+    else { close(); out += `<p>${inl(l)}</p>`; }
+  }
+  close(); return out;
+}
+function casePrompt(e){
+  const r = recommend(e), c = r.gfr;
+  const types = PAIN_TYPES.filter(([k]) => (e.type || {})[k]).map(([, l]) => l).join("; ") || "не указан";
+  const red = RED_FLAGS.filter(([k]) => (e.red || {})[k]).map(([, l]) => l).join("; ") || "нет";
+  const cm = COMEDS.filter(([k]) => (e.comed || {})[k]).map(([, l]) => l).join("; ") || "не отмечена";
+  return `Ты — врач-онколог с подготовкой по паллиативной помощи и терапии боли, консультируешь гематолога. Отвечай на русском языке.
+
+ПАЦИЕНТ
+Пол: ${e.sex === "m" ? "мужской" : e.sex === "f" ? "женский" : "не указан"}; возраст ${e.age || "?"}; масса ${e.weight || "?"} кг; рост ${e.height || "?"} см.
+Диагноз: ${e.dx || "не указан"}. Тромбоциты ${e.plt || "?"} ×10⁹/л. СКФ по CKD-EPI: ${c ? fN(c.v, 0) + " мл/мин для доз (" + c.note + ")" : "не рассчитана"}.
+Сопутствующее: ${[e.liver && "печёночная дисфункция", e.ulcer && "язва в анамнезе", e.hf && "сердечная недостаточность", e.cvRisk && "высокий сердечно-сосудистый риск", e.elderly && "ослабленный или пожилой", e.cipn && "полинейропатия после химиотерапии"].filter(Boolean).join("; ") || "не отмечено"}.
+
+БОЛЬ
+Сейчас ${e.nrsNow || "?"}/10; в среднем ${e.nrsAvg || "?"}; худшая ${e.nrsWorst || "?"}; шкала: ${e.scaleUsed}; PAINAD ${e.painadScore || "—"}; DN4 ${e.dn4 || "—"}.
+Тип: ${types}. Локализация: ${e.location || "не указана"}. Характер: ${e.character || "не указан"}.
+Прорывных эпизодов в сутки: ${e.breakthroughPerDay || "?"}. Сон: ${e.sleep || "не указано"}. Активность: ${e.activity || "не указано"}.
+Тревожные признаки: ${red}.
+
+ТЕКУЩАЯ ТЕРАПИЯ
+Опиоид: ${({none:"не получает",weak:"слабый",strong:"сильный"})[e.opioidNow]}; суточная доза в пересчёте на морфин внутрь: ${r.ome || 0} мг.
+Другие анальгетики: ${e.curOther || "не указаны"}. Сопутствующие препараты: ${cm}.
+
+СХЕМА, ПРЕДЛОЖЕННАЯ ПРИЛОЖЕНИЕМ
+${[...r.rx, ...r.adj].map(x => `${x.n} — ${x.dose}`).join("; ")}
+Взаимодействия, отмеченные приложением: ${r.inter.map(x => x.t).join("; ") || "нет"}.
+
+ЗАДАЧА
+1. Оцени предложенную схему: соответствует ли интенсивности и типу боли, безопасна ли при этой функции почек, тромбоцитах и сопутствующей терапии.
+2. Назови, каких данных не хватает для решения и что уточнить у пациента.
+3. Укажи, что сделать при недостаточном эффекте через 24 и 48 часов, включая условия ротации опиоида.
+4. Отметь немедикаментозные и интервенционные возможности, которые стоит обсудить.
+
+ФОРМАТ (Markdown, не более 400 слов)
+### Оценка схемы
+### Чего не хватает
+### Если эффекта нет
+### Дополнительные возможности
+
+ПРАВИЛА
+Опирайся только на приведённые данные и прямо говори, где их недостаточно. Не превышай зарегистрированные дозы, напоминай о необходимости сверить дозу с инструкцией. Помни, что опиоиды подлежат предметно-количественному учёту. Решение принимает лечащий врач.`;
+}
+async function runAI(key){
+  if (!S.sample || (S.ai[key] || {}).busy) return;
+  const ctl = new AbortController();
+  S.ai[key] = {busy:true, text:"", ctl, err:""}; render();
+  try {
+    const {text} = await S.sample(casePrompt(S.ep), {modelTier:"complex", cache:false, signal:ctl.signal,
+      onText:({text}) => { S.ai[key].text = text; render(); }});
+    S.ai[key] = {busy:false, text, ctl:null, err:""};
+  } catch(e) {
+    const m = {cancelled:"", not_granted:"Использование ИИ не разрешено в этом просмотре.", rate_limited:"Слишком много запросов, повторите через минуту.", prompt_too_large:"Слишком много данных."};
+    S.ai[key] = {busy:false, text:(S.ai[key] || {}).text || "", ctl:null, err:(e && m[e.code] !== undefined) ? m[e.code] : "Не удалось получить ответ."};
+  }
+  render();
+}
+
+/* ===================== события ===================== */
+document.addEventListener("input", ev => {
+  const t = ev.target, k = t.dataset.k; if (!k) return;
+  if (t.type === "checkbox") { const g = t.dataset.g; if (g) S.ep[g] = {...(S.ep[g] || {}), [k]:t.checked}; else S.ep[k] = t.checked; }
+  else S.ep[k] = t.value;
+  if (k === "author") lsSet("pain-user", t.value);
+});
+document.addEventListener("change", ev => { const t = ev.target; if (t.dataset.k && (t.tagName === "SELECT" || t.type === "checkbox")) render(); });
+document.addEventListener("click", async ev => {
+  const n = ev.target.closest("[data-nrs]");
+  if (n) { S.ep[n.dataset.nrs] = n.dataset.val; return render(); }
+  const a = ev.target.closest("[data-ai]"); if (a) return runAI(a.dataset.ai);
+  const st = ev.target.closest("[data-ai-stop]"); if (st) { const s = S.ai[st.dataset.aiStop]; if (s && s.ctl) s.ctl.abort(); return; }
+  const b = ev.target.closest("button"); if (!b) return;
+  if (b.dataset.tab) { S.tab = b.dataset.tab; return render(); }
+  if (b.dataset.open) { const e = S.list.find(x => x.id === b.dataset.open); if (e) { S.ep = JSON.parse(JSON.stringify(e)); S.ai = {}; S.tab = "rec"; render(); } return; }
+  if (b.dataset.deldiary) { S.ep.diary = (S.ep.diary || []).filter(x => x.id !== b.dataset.deldiary); return render(); }
+  switch (b.dataset.act) {
+    case "toRec": S.tab = "rec"; return render();
+    case "new": S.ep = newEpisode(); S.ai = {}; S.tab = "assess"; return render();
+    case "print": return window.print();
+    case "addDiary": {
+      const nrs = num($("#dNrs").value);
+      if (nrs == null || nrs < 0 || nrs > 10) { alert("Укажите боль числом от 0 до 10."); return; }
+      S.ep.diary = [...(S.ep.diary || []), {id:rid(), t:$("#dTime").value || nowLocal(), nrs:String(nrs), bt:$("#dBt").value.trim(), note:$("#dNote").value.trim()}];
+      return render();
+    }
+    case "save": {
+      const msg = $("#saveMsg");
+      if (!S.ep.name) { if (msg) { msg.className = "msg err"; msg.textContent = "Укажите имя или код пациента."; } else alert("Укажите имя или код пациента."); return; }
+      S.ep.savedAt = new Date().toISOString();
+      try { await S.store.put(JSON.parse(JSON.stringify(S.ep))); if (msg) { msg.className = "msg"; msg.textContent = "Случай сохранён."; } }
+      catch(e) { if (msg) { msg.className = "msg err"; msg.textContent = "Не удалось сохранить."; } }
+      return;
+    }
+    case "delete": { if (!confirm("Удалить случай?")) return; try { await S.store.del(S.ep.id); S.ep = newEpisode(); render(); } catch(e) { alert("Не удалось удалить."); } return; }
+    case "export": {
+      if (!S.downloads) return;
+      const r = recommend(S.ep), q = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
+      const lines = [["Раздел","Препарат","Доза или содержание"].map(q).join(";")];
+      lines.push(["Пациент", S.ep.name, `боль ${S.ep.nrsNow || "—"}/10, СКФ ${r.gfr ? fN(r.gfr.v, 0) : "—"} мл/мин`].map(q).join(";"));
+      r.rx.forEach(x => lines.push(["Базовая схема", x.n, x.dose].map(q).join(";")));
+      r.adj.forEach(x => lines.push(["Адъюванты", x.n, x.dose].map(q).join(";")));
+      r.support.forEach(x => lines.push(["Сопровождение", "", x].map(q).join(";")));
+      r.inter.forEach(x => lines.push(["Взаимодействия", x.t, x.d].map(q).join(";")));
+      try { await S.downloads.save({filename:`Боль — ${S.ep.name || "случай"}.csv`, data:"\uFEFF" + lines.join("\r\n")}); } catch(e) {}
+      return;
+    }
+  }
+});
+
+/* ===================== запуск ===================== */
+render();
+(async () => {
+  let db = null;
+  if (window.claude && typeof window.claude.use === "function") {
+    const [a, b, c] = await Promise.all([window.claude.use("db").catch(() => null), window.claude.use("sample").catch(() => null), window.claude.use("downloads").catch(() => null)]);
+    db = a; S.sample = b; S.downloads = c;
+  }
+  S.store = db ? Remote(db) : Local();
+  $("#mode").innerHTML = db ? `<i class="dot live"></i><span>общая база отделения</span>` : `<i class="dot local"></i><span>только этот браузер</span>`;
+  S.store.listen(list => { S.list = list; render(); }, () => {});
+  render();
+})();
+</script>
+</body>
+</html>

@@ -159,7 +159,9 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 /* пустое поле — «нет данных», а не ноль: иначе пустые тромбоциты запрещают НПВП, а пустой креатинин даёт бесконечную СКФ */
-const num = v => { const s = String(v ?? "").trim().replace(",", "."); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : null; };
+/* Число из поля: запятая как десятичный знак, единицы после числа допускаются («1,1 мг/дл», «60 лет»). */
+const num = v => { const s = String(v ?? "").trim().replace(",", "."); if (!s) return null; const n = Number(s); if (Number.isFinite(n)) return n;
+  const m = s.match(/^[<>≤≥~]?\s*(-?\d+(?:\.\d+)?)(?:\s|[^\d.]|$)/); return m ? Number(m[1]) : null; };
 const fN = (v, d) => v == null ? "—" : Number(v).toLocaleString("ru-RU", {maximumFractionDigits: d ?? 1});
 const pad2 = n => String(n).padStart(2, "0");
 const nowLocal = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
@@ -299,11 +301,30 @@ const EQUI = [
 ];
 
 /* ===================== расчёты ===================== */
+/* Креатинин вводится в мг/дл или в мкмоль/л; достаточно одного поля, второе получается пересчётом (1 мг/дл = 88,4 мкмоль/л).
+   Креатинин выше 20 мг/дл (1768 мкмоль/л) не встречается, поэтому такое число в поле «мг/дл» считается мкмоль/л. */
+const UMOL_PER_MGDL = 88.4, MGDL_MAX = 20;
+function creat(p){
+  let mg = num(p.scr), um = num(p.crea_umol), swapped = false, mismatch = false;
+  if (mg != null && mg > MGDL_MAX) { swapped = true; if (um != null) mismatch = Math.abs(mg - um) / um > 0.1; else um = mg; mg = null; }
+  else mismatch = mg != null && um != null && mg > 0 && Math.abs(um / UMOL_PER_MGDL - mg) / mg > 0.1;
+  const mgdl = mg != null ? mg : um != null ? um / UMOL_PER_MGDL : null;
+  const umol = um != null ? um : mg != null ? mg * UMOL_PER_MGDL : null;
+  return {mgdl, umol, mismatch, swapped};
+}
+/* Чего не хватает для СКФ — чтобы подсказка называла конкретные поля. */
+function gfrNeed(p){
+  const m = [];
+  if (num(p.age) == null) m.push("возраст");
+  if (p.sex !== "m" && p.sex !== "f") m.push("пол");
+  const c = creat(p).mgdl; if (c == null || c <= 0) m.push("креатинин");
+  return m;
+}
 /* СКФ по CKD-EPI 2021 (креатининовое уравнение без расовой поправки) — как в приложениях ОРИТ и фебрильной нейтропении.
    idx — мл/мин/1,73 м²; v — для доз и порогов выбора препаратов: без индексации, idx × ППТ / 1,73 (KDIGO 2024),
    ППТ по Мостеллеру; без роста или массы берётся индексированное значение. */
 function gfr(p){
-  const age = num(p.age), scr = num(p.scr);
+  const age = num(p.age), scr = creat(p).mgdl;
   if (age == null || scr == null || scr <= 0 || !p.sex) return null;
   const f = p.sex === "f", k = f ? 0.7 : 0.9, a = f ? -0.241 : -0.302;
   const idx = 142 * Math.pow(Math.min(scr / k, 1), a) * Math.pow(Math.max(scr / k, 1), -1.2) * Math.pow(0.9938, age) * (f ? 1.012 : 1);
@@ -315,7 +336,7 @@ function gfr(p){
 function doseOf(key, p){
   const d = DRUGS[key]; if (!d) return {n:key, dose:"—"};
   const c = gfr(p);
-  if (!c) return {n:d.n, dose:d.bands[0][1], notes:d.notes, route:d.route, basis:"СКФ не рассчитана: нужны возраст, пол и креатинин"};
+  if (!c) return {n:d.n, dose:d.bands[0][1], notes:d.notes, route:d.route, basis:`СКФ не рассчитана: укажите ${gfrNeed(p).join(", ")}`};
   const b = d.bands.find(x => c.v >= x[0]) || d.bands[d.bands.length - 1];
   return {n:d.n, dose:b[1], notes:d.notes, route:d.route, basis:`СКФ ${fN(c.v, 0)} мл/мин (CKD-EPI)`};
 }
@@ -350,6 +371,12 @@ function recommend(p){
     }[k];
     out.flags.push({lvl:"crit", t, d:txt});
   }
+
+  const crt = creat(p);
+  if (crt.swapped) out.flags.push({lvl:"warn", t:"Креатинин в поле «мг/дл» принят за мкмоль/л",
+    d:`Внесено ${fN(num(p.scr), 0)}: в мг/дл такого значения не бывает (выше ${MGDL_MAX} мг/дл), поэтому оно считается в мкмоль/л — ${fN(crt.mgdl, 2)} мг/дл. Если это ошибка ввода, исправьте значение.`});
+  if (crt.mismatch) out.flags.push({lvl:"warn", t:"Значения креатинина в двух полях не совпадают",
+    d:`В полях «мг/дл» и «мкмоль/л» внесены значения, которые расходятся больше чем на 10% (1 мг/дл = 88,4 мкмоль/л). Сейчас СКФ и дозы считаются по ${fN(crt.mgdl, 2)} мг/дл. Проверьте и оставьте одно значение.`});
 
   /* противопоказания к НПВП */
   const nsaidBlock = [], nsaidCare = [];
@@ -478,7 +505,7 @@ function recommend(p){
 /* ===================== состояние ===================== */
 const S = {tab:"assess", ep:newEpisode(), list:[], ai:{}, sample:null, downloads:null, store:null};
 function newEpisode(){
-  return {id:rid(), createdAt:new Date().toISOString(), author:lsGet("pain-user") || "", name:"", card:"", age:"", sex:"", weight:"", height:"", scr:"",
+  return {id:rid(), createdAt:new Date().toISOString(), author:lsGet("pain-user") || "", name:"", card:"", age:"", sex:"", weight:"", height:"", scr:"", crea_umol:"",
     dx:"", plt:"", liver:false, ulcer:false, hf:false, cvRisk:false, elderly:false, cipn:false,
     nrsNow:"", nrsAvg:"", nrsWorst:"", scaleUsed:"nrs", painadScore:"", dn4:"", sleep:"", activity:"",
     type:{}, red:{}, comed:{}, location:"", character:"", breakthroughPerDay:"",
@@ -530,7 +557,7 @@ function assessHTML(){
   return `<div class="card"><h3>Пациент</h3><div class="grid">
     ${F("ФИО или код","name")}${F("№ истории болезни","card")}${F("Возраст, лет","age")}
     ${F("Пол","sex","sel",[["","не указан"],["m","мужской"],["f","женский"]])}
-    ${F("Масса тела, кг","weight")}${F("Рост, см","height")}${F("Креатинин, мг/дл","scr")}
+    ${F("Масса тела, кг","weight")}${F("Рост, см","height")}${F("Креатинин, мг/дл","scr")}${F("Креатинин, мкмоль/л","crea_umol")}
     ${F("Тромбоциты, ×10⁹/л","plt")}${F("Диагноз","dx")}
   </div><div class="cols" style="margin-top:8px">
     ${CB("Печёночная дисфункция, цирроз или регулярное употребление алкоголя","liver")}
@@ -587,7 +614,7 @@ function recHTML(){
     ${tile("Боль сейчас", now != null ? now : "—", sev(now) || "не оценена", now == null ? "" : now >= 7 ? "crit" : now >= 4 ? "warn" : "ok")}
     ${tile("Уровень для выбора", lvl || "—", sev(lvl) || "", cls)}
     ${tile("Суточная доза в пересчёте на морфин", r.ome ? r.ome + " мг" : "—", "морфин внутрь", r.ome >= 200 ? "warn" : "")}
-    ${tile("СКФ (CKD-EPI)", c ? fN(c.idx, 0) : "—", c ? (c.bsa ? `мл/мин/1,73 м²; для доз ${fN(c.v, 0)} мл/мин` : "мл/мин/1,73 м²; для доз без пересчёта на ППТ") : "нужны возраст, пол, креатинин", !c ? "" : c.v < 30 ? "crit" : c.v < 60 ? "warn" : "ok")}
+    ${tile("СКФ (CKD-EPI)", c ? fN(c.idx, 0) : "—", c ? (c.bsa ? `мл/мин/1,73 м²; для доз ${fN(c.v, 0)} мл/мин` : "мл/мин/1,73 м²; для доз без пересчёта на ППТ") : "укажите: " + gfrNeed(p).join(", "), !c ? "" : c.v < 30 ? "crit" : c.v < 60 ? "warn" : "ok")}
     ${tile("Тромбоциты", num(p.plt) != null ? num(p.plt) : "—", "×10⁹/л", num(p.plt) != null && num(p.plt) < 50 ? "crit" : num(p.plt) != null && num(p.plt) < 100 ? "warn" : "ok")}
     ${tile("НПВП", r.nsaidBlock.length ? "нельзя" : r.nsaidCare.length ? "с осторожностью" : "можно", r.nsaidBlock.length ? r.nsaidBlock.join("; ") : r.nsaidCare.join("; "), r.nsaidBlock.length ? "crit" : r.nsaidCare.length ? "warn" : "ok")}
   </div>`;
@@ -635,7 +662,7 @@ function interHTML(){
 function refHTML(){
   const c = gfr(S.ep);
   return `<div class="card"><h3>Дозы с учётом функции почек</h3>
-    <p class="snote">${c ? `Колонка «Для пациента» рассчитана для СКФ ${fN(c.v, 0)} мл/мин (${c.note}).` : "Заполните возраст, пол, креатинин, а также рост и массу на первом шаге, чтобы получить дозу для конкретного пациента."}</p>
+    <p class="snote">${c ? `Колонка «Для пациента» рассчитана для СКФ ${fN(c.v, 0)} мл/мин (${c.note}).` : `Для расчёта СКФ укажите на первом шаге: ${gfrNeed(S.ep).join(", ")}. Для пересчёта на площадь поверхности тела нужны также рост и масса.`}</p>
     <div class="scroll"><table><thead><tr><th>Препарат</th><th>Группа</th><th>Путь</th><th>Для пациента</th><th>Особенности</th></tr></thead><tbody>
     ${Object.entries(DRUGS).map(([k, d]) => { const x = doseOf(k, S.ep);
       return `<tr><td><b>${esc(d.n)}</b></td><td class="faint">${esc(d.grp)}</td><td class="faint">${esc(d.route)}</td><td>${esc(x.dose)}</td><td>${esc(d.notes || "")}</td></tr>`; }).join("")}

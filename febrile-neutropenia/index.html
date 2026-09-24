@@ -173,7 +173,9 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 /* пустое поле — «нет данных», а не ноль: иначе незаполненные ШКГ, диурез и АД дают баллы SOFA и признаки шока */
-const num = v => { const s = String(v ?? "").trim().replace(",", "."); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : null; };
+/* Число из поля: запятая как десятичный знак, единицы после числа допускаются («1,1 мг/дл», «60 лет»). */
+const num = v => { const s = String(v ?? "").trim().replace(",", "."); if (!s) return null; const n = Number(s); if (Number.isFinite(n)) return n;
+  const m = s.match(/^[<>≤≥~]?\s*(-?\d+(?:\.\d+)?)(?:\s|[^\d.]|$)/); return m ? Number(m[1]) : null; };
 const fN = (v, d) => v == null ? "—" : Number(v).toLocaleString("ru-RU", {maximumFractionDigits: d ?? 1});
 const pad2 = n => String(n).padStart(2, "0");
 const nowLocal = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
@@ -264,14 +266,24 @@ const DRUGS = {
 const SEV = {crit:0, warn:1, info:2, ok:3};
 
 /* ================== расчёты ================== */
-/* Креатинин вводится в мг/дл или в мкмоль/л; достаточно одного поля, второе получается пересчётом (1 мг/дл = 88,4 мкмоль/л). */
-const UMOL_PER_MGDL = 88.4;
+/* Креатинин вводится в мг/дл или в мкмоль/л; достаточно одного поля, второе получается пересчётом (1 мг/дл = 88,4 мкмоль/л).
+   Креатинин выше 20 мг/дл (1768 мкмоль/л) не встречается, поэтому такое число в поле «мг/дл» считается мкмоль/л. */
+const UMOL_PER_MGDL = 88.4, MGDL_MAX = 20;
 function creat(p){
-  const mg = num(p.scr), um = num(p.crea_umol);
+  let mg = num(p.scr), um = num(p.crea_umol), swapped = false, mismatch = false;
+  if (mg != null && mg > MGDL_MAX) { swapped = true; if (um != null) mismatch = Math.abs(mg - um) / um > 0.1; else um = mg; mg = null; }
+  else mismatch = mg != null && um != null && mg > 0 && Math.abs(um / UMOL_PER_MGDL - mg) / mg > 0.1;
   const mgdl = mg != null ? mg : um != null ? um / UMOL_PER_MGDL : null;
   const umol = um != null ? um : mg != null ? mg * UMOL_PER_MGDL : null;
-  const mismatch = mg != null && um != null && mg > 0 && Math.abs(um / UMOL_PER_MGDL - mg) / mg > 0.1;
-  return {mgdl, umol, mismatch, src: mg != null && um != null ? "both" : mg != null ? "mgdl" : um != null ? "umol" : null};
+  return {mgdl, umol, mismatch, swapped};
+}
+/* Чего не хватает для СКФ — чтобы подсказка называла конкретные поля. */
+function gfrNeed(p){
+  const m = [];
+  if (num(p.age) == null) m.push("возраст");
+  if (p.sex !== "m" && p.sex !== "f") m.push("пол");
+  const c = creat(p).mgdl; if (c == null || c <= 0) m.push("креатинин");
+  return m;
 }
 /* СКФ по CKD-EPI 2021 (креатининовое уравнение без расовой поправки) — та же формула, что в приложении ОРИТ.
    idx — мл/мин/1,73 м² (стадия ХБП, риск). v — для доз: без индексации, idx × ППТ / 1,73 (KDIGO 2024),
@@ -291,7 +303,7 @@ function doseOf(key, p){
   if (p.rrt === "hd") return {n:d.n, dose:d.hd || "по режиму диализа", tdm:d.tdm, basis:"гемодиализ"};
   if (p.rrt === "crrt") return {n:d.n, dose:d.crrt || "по режиму ЗПТ", tdm:d.tdm, basis:"ПЗПТ"};
   const c = gfr(p);
-  if (!c) return {n:d.n, dose:d.bands[0][1], tdm:d.tdm, basis:"СКФ не рассчитана: нужны возраст, пол и креатинин"};
+  if (!c) return {n:d.n, dose:d.bands[0][1], tdm:d.tdm, basis:`СКФ не рассчитана: укажите ${gfrNeed(p).join(", ")}`};
   const b = d.bands.find(x => c.v >= x[0]) || d.bands[d.bands.length - 1];
   return {n:d.n, dose:b[1], tdm:d.tdm, basis:`СКФ ${fN(c.v,0)} мл/мин (CKD-EPI)`};
 }
@@ -379,8 +391,10 @@ function recommend(p){
   else if (so.total >= 2) out.flags.push({lvl:"info", t:`SOFA ${so.total} — в основном за счёт тромбоцитопении`,
     d:`${sofaParts} Органная дисфункция не засчитана: оценка ${so.dysBasis}. Если тромбоцитопения не связана с химиотерапией, укажите исходный SOFA.`});
   const cr = creat(p);
-  if (cr.mismatch) out.flags.push({lvl:"warn", t:"Значения креатинина в мг/дл и мкмоль/л не совпадают",
-    d:`${fN(num(p.scr), 2)} мг/дл соответствует ${fN(num(p.scr) * UMOL_PER_MGDL, 0)} мкмоль/л, а внесено ${fN(num(p.crea_umol), 0)} мкмоль/л. СКФ и дозы считаются по мг/дл, SOFA — по мкмоль/л. Проверьте и оставьте одно значение.`});
+  if (cr.swapped) out.flags.push({lvl:"warn", t:"Креатинин в поле «мг/дл» принят за мкмоль/л",
+    d:`Внесено ${fN(num(p.scr), 0)}: в мг/дл такого значения не бывает (выше ${MGDL_MAX} мг/дл), поэтому оно считается в мкмоль/л — ${fN(cr.mgdl, 2)} мг/дл. Если это ошибка ввода, исправьте значение.`});
+  if (cr.mismatch) out.flags.push({lvl:"warn", t:"Значения креатинина в двух полях не совпадают",
+    d:`В полях «мг/дл» и «мкмоль/л» внесены значения, которые расходятся больше чем на 10% (1 мг/дл = 88,4 мкмоль/л). Сейчас СКФ и дозы считаются по ${fN(cr.mgdl, 2)} мг/дл. Проверьте и оставьте одно значение.`});
   if (q.score >= 2) out.flags.push({lvl:"warn", t:`qSOFA ${q.score}/3`, d:"Высокий риск неблагоприятного исхода: оценить перевод в ОРИТ, лактат, посевы, раннюю эскалацию."});
 
   const fo = p.foci || {}, im = p.ct || {}, riskWhy = [];
@@ -639,7 +653,7 @@ function recHTML(){
     ${tile("qSOFA", r.qsofa.score + "/3", r.qsofa.map != null ? `ср. АД ${fN(r.qsofa.map,0)}` : "", r.qsofa.score >= 2 ? "crit" : "ok")}
     ${tile("MASCC", ms.total, ms.low ? "≥ 21 — низкий риск" : "< 21 — высокий риск", ms.low ? "ok" : "warn")}
     ${tile("Лактат", fN(num(p.lactate), 1), num(p.lactate) == null ? "нет данных" : "ммоль/л", num(p.lactate) == null ? "" : num(p.lactate) >= 4 ? "crit" : num(p.lactate) > 2 ? "warn" : "ok")}
-    ${tile("СКФ (CKD-EPI)", c ? fN(c.idx, 0) : "—", c ? (c.bsa ? `мл/мин/1,73 м²; для доз ${fN(c.v, 0)} мл/мин` : "мл/мин/1,73 м²; для доз без пересчёта на ППТ") : "нужны возраст, пол, креатинин", !c ? "" : c.idx < 30 ? "crit" : c.idx < 60 ? "warn" : "ok")}
+    ${tile("СКФ (CKD-EPI)", c ? fN(c.idx, 0) : "—", c ? (c.bsa ? `мл/мин/1,73 м²; для доз ${fN(c.v, 0)} мл/мин` : "мл/мин/1,73 м²; для доз без пересчёта на ППТ") : "укажите: " + gfrNeed(p).join(", "), !c ? "" : c.idx < 30 ? "crit" : c.idx < 60 ? "warn" : "ok")}
     ${tile("Риск", r.risk.cls === "high" ? "высокий" : "низкий", "", r.risk.cls === "high" ? "warn" : "ok")}
   </div>`;
   o += r.flags.map(f => `<div class="alert ${f.lvl}"><span class="lvl">${f.lvl === "crit" ? "критично" : f.lvl === "warn" ? "внимание" : "к сведению"}</span><b>${esc(f.t)}</b><p>${esc(f.d)}</p></div>`).join("");
@@ -759,7 +773,7 @@ function microHTML(){
 function refHTML(){
   const c = gfr(S.ep);
   return `<div class="card"><h3>Дозы с учётом функции почек</h3>
-    <p class="snote">${c ? `Дозы в колонке «Для пациента» рассчитаны для СКФ ${fN(c.v,0)} мл/мин (${c.note}).` : "Заполните возраст, пол, креатинин, а также рост и массу на вкладке «Оценка пациента», чтобы получить дозу для конкретного пациента."} ${S.ep.rrt !== "none" ? "Учтён режим заместительной почечной терапии." : ""}</p>
+    <p class="snote">${c ? `Дозы в колонке «Для пациента» рассчитаны для СКФ ${fN(c.v,0)} мл/мин (${c.note}).` : `Для расчёта СКФ укажите на вкладке «Оценка пациента»: ${gfrNeed(S.ep).join(", ")}. Для пересчёта на площадь поверхности тела нужны также рост и масса.`} ${S.ep.rrt !== "none" ? "Учтён режим заместительной почечной терапии." : ""}</p>
     <div class="scroll"><table><thead><tr><th>Препарат</th><th>Группа</th><th>Для пациента</th><th>Гемодиализ</th><th>ПЗПТ</th><th>Мониторинг</th></tr></thead><tbody>
     ${Object.entries(DRUGS).map(([k, d]) => { const x = doseOf(k, S.ep);
       return `<tr><td><b>${esc(d.n)}</b></td><td class="faint">${esc(d.grp)}</td><td>${esc(x.dose)}</td><td>${esc(d.hd || "—")}</td><td>${esc(d.crrt || "—")}</td><td>${esc(d.tdm || "—")}</td></tr>`; }).join("")}

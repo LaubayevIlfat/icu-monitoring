@@ -10,7 +10,7 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const from = html.indexOf('"use strict";');
 const to = html.indexOf("/* ================== состояние и хранилище");
 assert.ok(from > 0 && to > from, "не найден блок расчётов в index.html");
-const E = new Function(html.slice(from, to) + "\nreturn {num, creat, gfr, doseOf, sofa, qsofa, mascc, shock, recommend, planSteps};")();
+const E = new Function(html.slice(from, to) + "\nreturn {num, creat, gfr, gfrNeed, doseOf, sofa, qsofa, mascc, shock, recommend, planSteps, DRUGS: typeof DRUGS !== 'undefined' ? DRUGS : {}};")();
 
 // Пустой эпизод в том виде, в каком его создаёт newEpisode()
 const EMPTY = {age:"", sex:"", weight:"", height:"", scr:"", anc:"", ancFalling:false, expDuration:"short", prophylaxis:"none", priorAbx:"none",
@@ -212,4 +212,39 @@ test("креатинин из любого из двух полей (Д7)", () =
   // расхождение > 10 % — предупреждение
   assert.ok(E.recommend(pt({scr:"0.9", crea_umol:"200"})).flags.some(f => /не совпадают/.test(f.t)));
   assert.ok(!E.recommend(pt({scr:"0.9", crea_umol:"80"})).flags.some(f => /не совпадают/.test(f.t)));
+});
+
+test("СКФ считается при любом привычном способе ввода креатинина", () => {
+  const g = over => E.gfr(pt({age:"60", sex:"m", weight:"70", height:"170", scr:"", crea_umol:"", ...over}));
+  const ref = Math.round(g({scr:"1.1"}).idx);
+  assert.equal(ref, 77);
+  assert.equal(Math.round(g({scr:"1,1"}).idx), ref);                  // запятая
+  assert.equal(Math.round(g({scr:"1,1 мг/дл"}).idx), ref);            // с единицами
+  assert.equal(Math.round(g({crea_umol:"97"}).idx), ref);             // только мкмоль/л
+  assert.equal(Math.round(g({crea_umol:"97 мкмоль/л"}).idx), ref);
+  assert.equal(Math.round(g({scr:"97"}).idx), ref);                   // мкмоль/л в поле «мг/дл»
+  assert.equal(Math.round(g({age:"60 лет", scr:"1.1"}).idx), ref);   // возраст с единицами
+});
+
+test("креатинин > 20 в поле «мг/дл» принимается за мкмоль/л с предупреждением", () => {
+  const r = E.recommend(pt({scr:"97", crea_umol:""}));
+  assert.ok(r.flags.some(f => /принят за мкмоль\/л/.test(f.t)));
+  assert.ok(!E.recommend(pt({scr:"1.1", crea_umol:""})).flags.some(f => /принят за мкмоль/.test(f.t)));
+  // оба поля в мкмоль/л и совпадают — расхождения нет; расходятся — предупреждение
+  assert.ok(!E.recommend(pt({scr:"97", crea_umol:"97"})).flags.some(f => /не совпадают/.test(f.t)));
+  assert.ok(E.recommend(pt({scr:"97", crea_umol:"200"})).flags.some(f => /не совпадают/.test(f.t)));
+});
+
+test("подсказка называет, чего не хватает для СКФ", () => {
+  assert.deepEqual(E.gfrNeed({}), ["возраст", "пол", "креатинин"]);
+  assert.deepEqual(E.gfrNeed(pt({sex:""})), ["пол"]);
+  assert.match(E.doseOf("cefepime" in E.DRUGS ? "cefepime" : "ibu", pt({sex:""})).basis, /укажите пол/);
+});
+
+test("num понимает числа с единицами и знаками сравнения", () => {
+  assert.equal(E.num("1,1 мг/дл"), 1.1);
+  assert.equal(E.num("60 лет"), 60);
+  assert.equal(E.num("<0,5"), 0.5);
+  assert.equal(E.num("мг"), null);
+  assert.equal(E.num("1.2.3"), null);
 });

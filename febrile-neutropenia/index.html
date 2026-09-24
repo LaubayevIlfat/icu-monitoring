@@ -264,8 +264,17 @@ const DRUGS = {
 const SEV = {crit:0, warn:1, info:2, ok:3};
 
 /* ================== расчёты ================== */
+/* Креатинин вводится в мг/дл или в мкмоль/л; достаточно одного поля, второе получается пересчётом (1 мг/дл = 88,4 мкмоль/л). */
+const UMOL_PER_MGDL = 88.4;
+function creat(p){
+  const mg = num(p.scr), um = num(p.crea_umol);
+  const mgdl = mg != null ? mg : um != null ? um / UMOL_PER_MGDL : null;
+  const umol = um != null ? um : mg != null ? mg * UMOL_PER_MGDL : null;
+  const mismatch = mg != null && um != null && mg > 0 && Math.abs(um / UMOL_PER_MGDL - mg) / mg > 0.1;
+  return {mgdl, umol, mismatch, src: mg != null && um != null ? "both" : mg != null ? "mgdl" : um != null ? "umol" : null};
+}
 function crcl(p){
-  const age = num(p.age), scr = num(p.scr), w = num(p.weight), h = num(p.height);
+  const age = num(p.age), scr = creat(p).mgdl, w = num(p.weight), h = num(p.height);
   if (age == null || scr == null || !w || !p.sex) return null;
   let wt = w, note = "по фактической массе тела";
   if (h) { const ibw = (p.sex === "m" ? 50 : 45) + 2.3 * (h / 2.54 - 60);
@@ -285,7 +294,7 @@ function doseOf(key, p){
 function sofa(p){
   const parts = {}, miss = [];
   const pf = (num(p.po2) != null && num(p.fio2)) ? num(p.po2) / (num(p.fio2) / 100) : null;
-  const vent = p.vent === "2";
+  const vent = p.vent === "1" || p.vent === "2"; /* НИВЛ и высокопоточная O₂ тоже считаются поддержкой: без неё баллы 3–4 недоступны */
   if (pf != null) parts.resp = {p: pf >= 400 ? 0 : pf >= 300 ? 1 : pf >= 200 ? 2 : !vent ? 2 : pf >= 100 ? 3 : 4, s:`PaO₂/FiO₂ ${fN(pf,0)}`};
   else if (num(p.spo2) != null) { const s = num(p.spo2); parts.resp = {p: s >= 95 ? 0 : s >= 92 ? 1 : s >= 88 ? 2 : 3, s:`по SpO₂ ${s}% (ориентировочно)`}; miss.push("газы крови"); }
   else miss.push("дыхание");
@@ -301,9 +310,9 @@ function sofa(p){
     parts.cv = {p:x, s:[map != null && `ср. АД ${fN(map,0)}`, na && `норадреналин ${na}`, ad && `адреналин ${ad}`, dop && `дофамин ${dop}`, dob && `добутамин ${dob}`].filter(Boolean).join(", ")};
   } else miss.push("гемодинамика");
   if (num(p.gcs) != null) { const x = num(p.gcs); parts.cns = {p: x >= 15 ? 0 : x >= 13 ? 1 : x >= 10 ? 2 : x >= 6 ? 3 : 4, s:`ШКГ ${x}`}; } else miss.push("сознание");
-  if (num(p.crea_umol) != null || num(p.diur24) != null) {
-    const x = num(p.crea_umol), d = num(p.diur24); let pr = 0, s = [];
-    if (x != null) { pr = x < 110 ? 0 : x <= 170 ? 1 : x <= 299 ? 2 : x <= 440 ? 3 : 4; s.push(`креатинин ${x}`); }
+  if (creat(p).umol != null || num(p.diur24) != null) {
+    const x = creat(p).umol, d = num(p.diur24); let pr = 0, s = [];
+    if (x != null) { pr = x < 110 ? 0 : x <= 170 ? 1 : x <= 299 ? 2 : x <= 440 ? 3 : 4; s.push(`креатинин ${fN(x,0)}`); }
     if (d != null && d < 500) { pr = Math.max(pr, d < 200 ? 4 : 3); s.push(`диурез ${d} мл/сут`); }
     parts.renal = {p:pr, s:s.join(", ")};
   } else miss.push("почки");
@@ -365,6 +374,9 @@ function recommend(p){
     d:`${sofaParts} Оценка ${so.dysBasis}. Прирост SOFA ≥ 2 от исходного при инфекции соответствует критериям сепсиса (Sepsis-3).`});
   else if (so.total >= 2) out.flags.push({lvl:"info", t:`SOFA ${so.total} — в основном за счёт тромбоцитопении`,
     d:`${sofaParts} Органная дисфункция не засчитана: оценка ${so.dysBasis}. Если тромбоцитопения не связана с химиотерапией, укажите исходный SOFA.`});
+  const cr = creat(p);
+  if (cr.mismatch) out.flags.push({lvl:"warn", t:"Значения креатинина в мг/дл и мкмоль/л не совпадают",
+    d:`${fN(num(p.scr), 2)} мг/дл соответствует ${fN(num(p.scr) * UMOL_PER_MGDL, 0)} мкмоль/л, а внесено ${fN(num(p.crea_umol), 0)} мкмоль/л. Клиренс и дозы считаются по мг/дл, SOFA — по мкмоль/л. Проверьте и оставьте одно значение.`});
   if (q.score >= 2) out.flags.push({lvl:"warn", t:`qSOFA ${q.score}/3`, d:"Высокий риск неблагоприятного исхода: оценить перевод в ОРИТ, лактат, посевы, раннюю эскалацию."});
 
   const fo = p.foci || {}, im = p.ct || {}, riskWhy = [];
@@ -385,7 +397,7 @@ function recommend(p){
 
   /* выбор базового препарата */
   let base = "cefepime", why = "стандартная монотерапия антисинегнойным β-лактамом при фебрильной нейтропении.";
-  if (p.foci?.gi || p.ct?.typhl) { base = "piptazo"; why = "очаг в брюшной полости или нейтропенический энтероколит: нужен охват анаэробов."; }
+  if (p.foci?.gi || p.foci?.perianal || p.ct?.typhl) { base = "piptazo"; why = "очаг в брюшной полости, перианальный очаг или нейтропенический энтероколит: нужен охват анаэробов."; }
   if (mdr("esbl") || prior === "carbapenem") { base = "meropenem"; why = "колонизация или перенесённая инфекция БЛРС-продуцентом (либо предшествующая терапия карбапенемом): карбапенем с первой дозы."; }
   if (sh.suspected || sh.septicShock) { base = "meropenem"; why = "сепсис или септический шок: карбапенем с первой дозы как наиболее надёжный охват грамотрицательной флоры."; }
   if (mdr("dtr")) { base = "ceftol"; why = "P. aeruginosa с трудноизлечимой резистентностью в анамнезе: цефтолозан/тазобактам или цефтазидим/авибактам по чувствительности."; }
@@ -417,7 +429,7 @@ function recommend(p){
     else out.addons.push({...doseOf("vanco", p), why:`показания к добавлению анти-MRSA препарата: ${gramPos.join("; ")}. Если через 48–72 ч грамположительный возбудитель не выделен — отменить.`});
   } else out.deesc.push("Рутинное добавление ванкомицина в стартовую схему не показано: нет нестабильности, катетерной инфекции, пневмонии, поражения кожи и колонизации MRSA.");
 
-  if (p.foci?.gi && base === "cefepime") out.addons.push({...doseOf("metro", p), why:"цефепим не покрывает анаэробы: при энтероколите, перианальном очаге и внутрибрюшной инфекции добавляется метронидазол (для пиперациллина/тазобактама и карбапенемов не требуется)."});
+  if ((p.foci?.gi || p.foci?.perianal) && base === "cefepime") out.addons.push({...doseOf("metro", p), why:"цефепим не покрывает анаэробы: при энтероколите, перианальном очаге и внутрибрюшной инфекции добавляется метронидазол (для пиперациллина/тазобактама и карбапенемов не требуется)."});
   if (p.cdiff) out.addons.push({...doseOf("vancoPO", p), why:"клостридиальная инфекция: ванкомицин внутрь (альтернатива — фидаксомицин 200 мг каждые 12 ч); метронидазол внутривенно только как дополнение при тяжёлом течении."});
 
   /* противогрибковая тактика */
@@ -558,10 +570,10 @@ function assessHTML(){
     ${F("ФИО или код", "name")}${F("№ истории болезни", "card")}${F("Возраст, лет", "age")}
     ${F("Пол", "sex", "sel", [["", "не указан"],["m","мужской"],["f","женский"]])}
     ${F("Масса тела, кг", "weight")}${F("Рост, см", "height")}${F("Креатинин, мг/дл", "scr")}
-    ${F("Креатинин, мкмоль/л (для SOFA)", "crea_umol")}
+    ${F("Креатинин, мкмоль/л", "crea_umol")}
     ${F("Заместительная почечная терапия", "rrt", "sel", [["none","нет"],["hd","интермиттирующий гемодиализ"],["crrt","ПЗПТ"]])}
     ${F("Основной диагноз", "dx")}${F("Режим химиотерапии, день курса", "chemo")}
-    </div><p class="snote">Клиренс креатинина считается по Кокрофту–Голту (при ожирении — по скорректированной массе); от него зависят все дозы в рекомендации. Креатинин в мг/дл = мкмоль/л ÷ 88,4.</p></div>
+    </div><p class="snote">Клиренс креатинина считается по Кокрофту–Голту (при ожирении — по скорректированной массе); от него зависят все дозы в рекомендации. Креатинин достаточно внести в одном поле — в мг/дл или в мкмоль/л, второе значение пересчитывается (1 мг/дл = 88,4 мкмоль/л).</p></div>
 
   <div class="card"><h3>Нейтропения и лихорадка</h3><div class="grid">
     ${F("Нейтрофилы, ×10⁹/л", "anc")}
@@ -1034,7 +1046,7 @@ function caseSummary(e){
 Нейтрофилы ${e.anc || "?"} ×10⁹/л; ожидаемая длительность нейтропении: ${e.expDuration === "long" ? "более 7 суток" : "до 7 суток"}; профилактика: ${({none:"нет",fq:"фторхинолон",azole:"азол",both:"фторхинолон и азол"})[e.prophylaxis] || "нет"}; предшествующая антибактериальная терапия: ${({none:"нет",beta:"β-лактам",carbapenem:"карбапенем",other:"другая"})[e.priorAbx] || "нет"}.
 Температура максимальная ${e.tempMax || "?"} °C; суток лихорадки на терапии: ${e.feverDays || 0}.
 Гемодинамика: АД ${e.sbp || "?"}/${e.dbp || "?"}, ЧСС ${e.hr || "?"}, ЧДД ${e.rr || "?"}, SpO₂ ${e.spo2 || "?"}%, FiO₂ ${e.fio2 || "?"}%, PaO₂ ${e.po2 || "?"}, ШКГ ${e.gcs || "?"}, лактат ${e.lactate || "?"}, вазопрессоры: норадреналин ${e.norad || 0}, адреналин ${e.adr || 0}.
-Лабораторно: тромбоциты ${e.plt || "?"}, билирубин ${e.bil || "?"}, креатинин ${e.crea_umol || "?"} мкмоль/л, диурез ${e.diur24 || "?"} мл/сут; ЗПТ: ${({none:"нет",hd:"гемодиализ",crrt:"ПЗПТ"})[e.rrt]}.
+Лабораторно: тромбоциты ${e.plt || "?"}, билирубин ${e.bil || "?"}, креатинин ${creat(e).umol != null ? fN(creat(e).umol, 0) : "?"} мкмоль/л, диурез ${e.diur24 || "?"} мл/сут; ЗПТ: ${({none:"нет",hd:"гемодиализ",crrt:"ПЗПТ"})[e.rrt]}.
 Расчётный клиренс креатинина: ${c ? fN(c.v, 0) + " мл/мин (" + c.note + ")" : "не рассчитан"}.
 Шкалы: SOFA ${r.sofa.total} (для оценки органной дисфункции ${r.sofa.dys}: ${r.sofa.dysBasis})${r.sofa.miss.length ? " (нет данных: " + r.sofa.miss.join(", ") + ")" : ""}; qSOFA ${r.qsofa.score}/3; MASCC ${r.mascc.total}; риск: ${r.risk.t}.
 Очаги: ${foci}. Находки КТ: ${ct}. Описание исследования: ${(e.ctText || "нет").slice(0, 1500)}.

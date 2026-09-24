@@ -10,7 +10,7 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const from = html.indexOf('"use strict";');
 const to = html.indexOf("/* ================== состояние и хранилище");
 assert.ok(from > 0 && to > from, "не найден блок расчётов в index.html");
-const E = new Function(html.slice(from, to) + "\nreturn {num, crcl, doseOf, sofa, qsofa, mascc, shock, recommend, planSteps};")();
+const E = new Function(html.slice(from, to) + "\nreturn {num, creat, crcl, doseOf, sofa, qsofa, mascc, shock, recommend, planSteps};")();
 
 // Пустой эпизод в том виде, в каком его создаёт newEpisode()
 const EMPTY = {age:"", sex:"", weight:"", height:"", scr:"", anc:"", ancFalling:false, expDuration:"short", prophylaxis:"none", priorAbx:"none",
@@ -133,7 +133,7 @@ test("дозы по клиренсу и ЗПТ", () => {
   const c = E.crcl(pt({weight:"140", height:"170"}));
   assert.match(c.note, /скорректированной массе/);
   assert.equal(Math.round(c.v), 125);
-  assert.equal(E.crcl(pt({scr:""})), null);
+  assert.equal(E.crcl(pt({scr:"", crea_umol:""})), null);
 });
 
 test("сценарий 1 из раздела 11.1: шок, ЦВК и ЖКТ, ESBL", () => {
@@ -161,4 +161,37 @@ test("план: линия 2 не дублирует линию 1", () => {
   assert.match(line2, /Каспофунгин/);
   assert.equal(steps[1].when, "через 24 часа");
   assert.equal(E.planSteps(pt({sbp:"80", dbp:"45", norad:"0.2"}), E.recommend(pt({sbp:"80", dbp:"45", norad:"0.2"})))[1].when, "через 6–12 часов");
+});
+
+test("НИВЛ и высокопоточная O₂ считаются респираторной поддержкой в SOFA (Д5)", () => {
+  const resp = vent => E.sofa(pt({po2:"60", fio2:"60", vent})).parts.resp.p; // PaO₂/FiO₂ = 100
+  assert.equal(resp("0"), 2);
+  assert.equal(resp("1"), 3);
+  assert.equal(resp("2"), 3);
+  assert.equal(E.sofa(pt({po2:"50", fio2:"60", vent:"1"})).parts.resp.p, 4);
+  assert.equal(E.sofa(pt({po2:"120", fio2:"35", vent:"1"})).parts.resp.p, 1); // PaO₂/FiO₂ 343: поддержка не влияет
+});
+
+test("перианальный очаг даёт охват анаэробов (Д6)", () => {
+  const r = E.recommend(pt({foci:{perianal:true}}));
+  assert.equal(r.baseKey, "piptazo");
+  assert.match(r.rx[0].why, /перианальный/);
+  assert.ok(!names(r).includes("Метронидазол")); // пиперациллин/тазобактам уже покрывает анаэробы
+  const r3 = E.recommend(pt({foci:{perianal:true}, colonization:{esbl:true}}));
+  assert.equal(r3.baseKey, "meropenem");
+  assert.ok(!names(r3).includes("Метронидазол"));
+});
+
+test("креатинин из любого из двух полей (Д7)", () => {
+  const onlyUmol = pt({scr:"", crea_umol:"80"});
+  const c = E.crcl(onlyUmol);
+  assert.ok(c, "клиренс должен считаться по мкмоль/л");
+  assert.equal(Math.round(c.v), Math.round(E.crcl(pt({scr:String(80 / 88.4), crea_umol:""})).v));
+  assert.doesNotMatch(E.doseOf("cefepime", onlyUmol).basis, /не рассчитан/);
+  const onlyMg = pt({scr:"3.0", crea_umol:""});
+  assert.equal(E.sofa(onlyMg).parts.renal.p, 2); // 265 мкмоль/л
+  assert.equal(E.creat(pt({scr:"", crea_umol:""})).mgdl, null);
+  // расхождение > 10 % — предупреждение
+  assert.ok(E.recommend(pt({scr:"0.9", crea_umol:"200"})).flags.some(f => /не совпадают/.test(f.t)));
+  assert.ok(!E.recommend(pt({scr:"0.9", crea_umol:"80"})).flags.some(f => /не совпадают/.test(f.t)));
 });
